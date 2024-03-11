@@ -1,0 +1,18 @@
+{
+  "name": "play",
+  "description": "Play a song or playlist by providing link or search query",
+  "options": [
+    {
+      "name": "link-or-query",
+      "description": "Link or search query",
+      "type": 3,
+      "required": true
+    },
+    {
+      "name": "priority",
+      "description": "Whether to place this on top of queue",
+      "type": 5,
+      "required": false
+    }
+  ]
+}
