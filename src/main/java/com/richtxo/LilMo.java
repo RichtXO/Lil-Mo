@@ -1,0 +1,54 @@
+package com.richtxo;
+
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
+import discord4j.core.DiscordClientBuilder;
+import discord4j.core.GatewayDiscordClient;
+import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.presence.ClientActivity;
+import discord4j.core.object.presence.ClientPresence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class LilMo {
+    public static final Logger LOGGER = LoggerFactory.getLogger(LilMo.class);
+
+    public static final AudioPlayerManager PLAYER_MANAGER;
+
+    static {
+        PLAYER_MANAGER = new DefaultAudioPlayerManager();
+        // This is an optimization strategy that Discord4J can utilize to minimize allocations
+        PLAYER_MANAGER.getConfiguration().setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+        AudioSourceManagers.registerRemoteSources(PLAYER_MANAGER);
+        AudioSourceManagers.registerLocalSource(PLAYER_MANAGER);
+    }
+
+    public static void main(String[] args){
+        final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN"))
+                .build()
+                .gateway()
+                .setInitialPresence(s -> ClientPresence.online(
+                        ClientActivity.listening("/play").withState("Give me more music!")))
+//                .setEnabledIntents(IntentSet.of(Intent.MESSAGE_CONTENT,
+//                        Intent.GUILD_VOICE_STATES,
+//                        Intent.GUILD_MEMBERS,
+//                        Intent.GUILD_MESSAGES))
+                .login()
+                .block();
+
+        // Adding commands
+        try {
+            assert client != null;
+            new CommandRegistrar(client.getRestClient()).registerCmds();
+        } catch (Exception e) {
+            LOGGER.error("Error trying to register commands", e);
+        }
+
+        client.on(ChatInputInteractionEvent.class, Listener::handle)
+                .then(client.onDisconnect())
+                .block();
+    }
+
+}
