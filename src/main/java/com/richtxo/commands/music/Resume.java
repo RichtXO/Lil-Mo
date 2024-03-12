@@ -32,7 +32,7 @@ public class Resume implements Command {
         String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
                 .getNicknameMention();
 
-        if (player.isPaused())
+        if (!player.isPaused())
             return event.reply().withContent(String.format("Already playing music, %s!", user));
 
         player.setPaused(false);

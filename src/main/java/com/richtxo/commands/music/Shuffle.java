@@ -1,6 +1,7 @@
 package com.richtxo.commands.music;
 
 import com.richtxo.audio.GuildAudioManager;
+import com.richtxo.audio.TrackScheduler;
 import com.richtxo.commands.Command;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import discord4j.common.util.Snowflake;
@@ -9,10 +10,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 
-public class Pause implements Command {
+public class Shuffle implements Command {
     @Override
     public String getName() {
-        return "pause";
+        return "shuffle";
     }
 
     @Override
@@ -22,20 +23,17 @@ public class Pause implements Command {
 
     @Override
     public String getCmdInfo() {
-        return "Pauses music";
+        return "Shuffles the queue";
     }
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
         Snowflake guildId = Objects.requireNonNull(event.getInteraction().getMember().orElse(null)).getGuildId();
-        AudioPlayer player = GuildAudioManager.of(guildId).getPlayer();
+        TrackScheduler scheduler = GuildAudioManager.of(guildId).getScheduler();
         String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
                 .getNicknameMention();
 
-        if (player.isPaused())
-            return event.reply().withContent(String.format("Already paused, %s!", user));
-
-        player.setPaused(true);
-        return event.reply().withContent(String.format("%s paused music!", user));
+        scheduler.shuffle();
+        return event.reply().withContent(String.format("%s has shuffled the queue!", user));
     }
 }

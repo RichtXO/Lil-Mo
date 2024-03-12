@@ -34,11 +34,8 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public boolean play(AudioTrack track, boolean force) {
         boolean playing = player.startTrack(track, !force);
-
-        if (!playing) {
+        if (!playing)
             queue.add(track);
-        }
-
         return playing;
     }
 
@@ -48,6 +45,10 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public boolean skip(int index){
         return !queue.isEmpty() && play(queue.remove(index), true);
+    }
+
+    public void shuffle() {
+        Collections.shuffle(queue);
     }
 
     @Override
