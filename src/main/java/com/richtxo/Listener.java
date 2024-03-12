@@ -1,11 +1,9 @@
 package com.richtxo;
 
 import com.richtxo.commands.Command;
+import com.richtxo.commands.music.*;
 import com.richtxo.commands.randomize.D20;
 import com.richtxo.commands.randomize.CoinFlip;
-import com.richtxo.commands.music.Join;
-import com.richtxo.commands.music.Leave;
-import com.richtxo.commands.music.Play;
 import com.richtxo.commands.utility.Ping;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import reactor.core.publisher.Flux;
@@ -25,6 +23,9 @@ public class Listener {
         commands.add(new Join());
         commands.add(new Play());
         commands.add(new Leave());
+        commands.add(new Resume());
+        commands.add(new Pause());
+        commands.add(new Skip());
 
         // Randomize Commands
         commands.add(new CoinFlip());
