@@ -7,11 +7,6 @@ public class SpotifyPlaylist {
     private String title;
     private SpotifySong[] songs;
 
-    public SpotifyPlaylist() {
-        this.title = "";
-        this.songs = new SpotifySong[]{};
-    }
-
     public SpotifyPlaylist(String title, SpotifySong[] songs) {
         this.title = title;
         this.songs = songs;

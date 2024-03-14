@@ -13,6 +13,22 @@
       "description": "Whether to place this on top of queue",
       "type": 5,
       "required": false
+    },
+    {
+      "name": "provider",
+      "description": "Provider to search for song",
+      "type": 3,
+      "required": false,
+      "choices": [
+        {
+          "name": "YouTube",
+          "value": "ytsearch"
+        },
+        {
+          "name": "SoundCloud",
+          "value": "scsearch"
+        }
+      ]
     }
   ]
 }

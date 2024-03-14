@@ -1,6 +1,5 @@
 package com.richtxo.util.spotify;
 
-import ch.qos.logback.core.boolex.Matcher;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
@@ -33,7 +32,6 @@ public class SpotifyFetch {
 
 
     public SpotifySong fetchSong (String url){
-        String test = getID(url);
         try{
             String id = getID(url);
             Track track = spotify.getTrack(id).build().execute();
