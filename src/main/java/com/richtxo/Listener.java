@@ -25,6 +25,7 @@ public class Listener {
         commands.add(new Resume());
         commands.add(new Pause());
         commands.add(new Skip());
+        commands.add(new Stop());
         commands.add(new Shuffle());
 
         // Randomize Commands

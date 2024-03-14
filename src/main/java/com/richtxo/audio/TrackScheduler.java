@@ -47,6 +47,10 @@ public class TrackScheduler extends AudioEventAdapter {
         return !queue.isEmpty() && play(queue.remove(index), true);
     }
 
+    public void clear() {
+        this.queue.clear();
+    }
+
     public void shuffle() {
         Collections.shuffle(queue);
     }

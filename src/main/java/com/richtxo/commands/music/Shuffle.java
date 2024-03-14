@@ -3,7 +3,6 @@ package com.richtxo.commands.music;
 import com.richtxo.audio.GuildAudioManager;
 import com.richtxo.audio.TrackScheduler;
 import com.richtxo.commands.Command;
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import reactor.core.publisher.Mono;
