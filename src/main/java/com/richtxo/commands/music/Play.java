@@ -238,43 +238,35 @@ public class Play implements Command {
                     Button fiveBtn = Button.secondary("5", ReactionEmoji.unicode("5\uFE0F⃣"));
                     Button cancelBtn = Button.secondary("cancel", ReactionEmoji.unicode("❌"));
 
-                    event.getClient().getChannelById(event.getInteraction().getChannelId())
-                            .ofType(GuildMessageChannel.class)
-                            .flatMap(channel -> {
-                                Mono<Message> messageMono = channel.createMessage(selectionEmbed.build())
-                                        .withComponents(ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
-                                                ActionRow.of(cancelBtn));
+                    AtomicBoolean hasSelect = new AtomicBoolean(false);
+                    Mono<Void> listener = event.getClient().on(ButtonInteractionEvent.class,
+                            buttonEvent -> {
+                                String buttonId = buttonEvent.getCustomId();
+                                hasSelect.set(true);
+                                if (buttonId.equals("cancel"))
+                                    return buttonEvent.reply(String.format("Canceling search for %s",
+                                            event.getInteraction().getMember().orElse(null)
+                                                    .getNicknameMention())).then();
 
-                                AtomicBoolean hasSelect = new AtomicBoolean(false);
+                                play(guildId, audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1));
+                                return buttonEvent.reply(String.format("Adding `%s` into queue!",
+                                                audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1).getInfo().title))
+                                        .then();
 
-                                Mono<Void> listener = event.getClient().on(ButtonInteractionEvent.class,
-                                    buttonEvent -> {
-                                    String buttonId = buttonEvent.getCustomId();
-                                    hasSelect.set(true);
-                                    if (buttonId.equals("cancel"))
-                                        return buttonEvent.reply(String.format("Canceling search for %s",
-                                                event.getInteraction().getMember().orElse(null)
-                                                        .getNicknameMention())).then();
+                            }).timeout(Duration.ofSeconds(10))
+                    .onErrorResume(ignore -> {
+                        if (!hasSelect.get())
+                            return event.editReply(String.format(
+                                    "Timeout for music selection, %s!",
+                                    event.getInteraction().getMember().orElse(null)
+                                            .getNicknameMention())).then();
+                        return Mono.empty();
+                    })
+                    .then();
 
-                                    play(guildId, audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1));
-                                    return buttonEvent.reply(String.format("Adding `%s` into queue!",
-                                        audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1).getInfo().title))
-                                                .then();
-
-                                }).timeout(Duration.ofSeconds(10))
-                                .onErrorResume(ignore -> {
-                                    if (!hasSelect.get())
-                                        return channel.createMessage(String.format(
-                                                "Timeout for music selection, %s!",
-                                                event.getInteraction().getMember().orElse(null)
-                                                        .getNicknameMention())).then();
-                                    return Mono.empty();
-                                })
-                                .then();
-                                return messageMono.then(listener);
-                            })
-                            .subscribe();
-
+                    event.editReply().withEmbeds(selectionEmbed.build()).withComponents(
+                            ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
+                            ActionRow.of(cancelBtn)).then(listener).subscribe();
                     monoSink.success();
                 }
 
