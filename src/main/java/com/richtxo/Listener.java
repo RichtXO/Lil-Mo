@@ -27,6 +27,7 @@ public class Listener {
         commands.add(new Skip());
         commands.add(new Stop());
         commands.add(new Shuffle());
+        commands.add(new Queue());
 
         // Randomize Commands
         commands.add(new CoinFlip());

@@ -1,8 +1,21 @@
 package com.richtxo.commands.music;
 
+import com.richtxo.audio.GuildAudioManager;
 import com.richtxo.commands.Command;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.component.Button;
+import discord4j.core.object.entity.User;
+import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class Queue implements Command {
     @Override
@@ -22,12 +35,76 @@ public class Queue implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
+        Snowflake guildId = event.getInteraction().getGuildId().orElse(null);
+        List<AudioTrack> musicQueue = GuildAudioManager.of(guildId).getScheduler().getQueue();
+        User bot = Objects.requireNonNull(event.getClient().getSelf().block());
+        if (musicQueue.isEmpty()){
+            if (GuildAudioManager.of(guildId).getPlayer().getPlayingTrack() == null)
+                return event.reply("No songs in queue!");
 
-        //TODO
+            AudioTrackInfo current = GuildAudioManager.of(guildId).getPlayer().getPlayingTrack().getInfo();
+            long totalHour = (current.length / (1000 * 60 * 60)) % 24;
+            long totalMin = (current.length / (1000 * 60)) % 60;
+            long totalSec = (current.length / 1000) % 60;
 
+            EmbedCreateSpec.Builder currentSong = EmbedCreateSpec.builder()
+                    .title(String.format("Current song: %s", current.title))
+                    .color(Color.of(0xad0000))
+                    .thumbnail((current.artworkUrl==null ? bot.getAvatarUrl() : current.artworkUrl))
+                    .addField("Author", (current.author != null ? current.author : "N/A"), true)
+                    .addField("ISRC", (current.isrc != null ? current.isrc : "N/A"), true)
+                    .addField("URI", (current.uri != null ? current.uri : "N/A"), false)
+                    .footer(String.format("Total Time: %02d:%02d:%02d", totalHour, totalMin, totalSec),
+                            bot.getAvatarUrl());
 
+            return event.reply().withEmbeds(currentSong.build());
+        }
 
+        AudioTrackInfo current = GuildAudioManager.of(guildId).getPlayer().getPlayingTrack().getInfo();
+        EmbedCreateSpec.Builder queueBase = EmbedCreateSpec.builder()
+                .title(String.format("`%d` Total Songs in Queue", musicQueue.size()))
+                .color(Color.of(0xad0000))
+                .description(String.format("Current song: `%s`", current.title))
+                .thumbnail(Objects.requireNonNull(
+                        event.getInteraction().getMember().orElse(null)).getAvatarUrl());
 
-        return Command.super.handle(event);
+        Button nextBtn = Button.secondary("next", ReactionEmoji.unicode("⏭️"));
+        Button prevBtn = Button.secondary("prev", ReactionEmoji.unicode("⏮️"));
+        Button doneDtn = Button.secondary("done", ReactionEmoji.unicode("✅"));
+
+        long totalTime = 0;
+        List<EmbedCreateSpec.Builder> paginationsBuilder = new ArrayList<>();
+        for (int pagination = 0; pagination < musicQueue.size() / 10; pagination++){
+            for (int i = 0; i < Math.min(musicQueue.size() - (pagination * 10), 10); i++){
+                AudioTrackInfo track = musicQueue.get(i + (pagination * 10)).getInfo();
+                totalTime += track.length;
+                long min = (track.length / (1000 * 60)) % 60;
+                long sec = (track.length / 1000) % 60;
+                queueBase.addField(String.format("`%d.` `[%02d:%02d]` %s", i, min, sec, track.title), "", false);
+            }
+
+            paginationsBuilder.add(queueBase);
+        }
+
+        List<EmbedCreateSpec.Builder> paginations = getBuilders(totalTime, paginationsBuilder, bot);
+        System.out.println("asdfasdfasdfasdf");
+
+        //TODO find out why this line isn't working...
+        return event.reply().withEmbeds(paginations.getFirst().build());
+    }
+
+    private static List<EmbedCreateSpec.Builder> getBuilders(long totalTime, List<EmbedCreateSpec.Builder> paginationsBuilder, User bot) {
+        long totalHour = (totalTime / (1000 * 60 * 60)) % 24;
+        long totalMin = (totalTime / (1000 * 60)) % 60;
+        long totalSec = (totalTime / 1000) % 60;
+
+        List<EmbedCreateSpec.Builder> paginations = new ArrayList<>();
+        for (int i = 0; i < paginationsBuilder.size(); i++){
+            EmbedCreateSpec.Builder page = paginationsBuilder.get(i);
+            page.footer(String.format("Total Time: `[%02d:%02d:%02d]` -- Page %d / %d",
+                    totalHour, totalMin, totalSec, i + 1, paginations.size()), bot.getAvatarUrl());
+            paginations.add(page);
+        }
+        return paginations;
     }
 }
