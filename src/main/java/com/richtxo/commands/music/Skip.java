@@ -49,6 +49,12 @@ public class Skip implements Command {
         }
 
         if (position == 0){
+            if (GuildAudioManager.of(guildId).getScheduler().skip())
+                return event.reply().withContent("Skipping to next song!");
+
+            if (GuildAudioManager.of(guildId).getPlayer().getPlayingTrack() == null)
+                return event.reply().withContent("Currently not playing anything!");
+
             GuildAudioManager.of((guildId)).getPlayer().stopTrack();
             return event.reply().withContent("Skipping current song!");
         }
@@ -56,6 +62,6 @@ public class Skip implements Command {
         if (GuildAudioManager.of(guildId).getScheduler().skip(position - 1))
             return event.reply().withContent(String.format("Skipping song at position `%d` in queue!", position));
 
-        return event.reply().withContent("Queue's currently empty!");
+        return event.reply().withContent("Queue's not that long!");
     }
 }
