@@ -10,17 +10,29 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import discord4j.common.util.Snowflake;
+import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
+import discord4j.core.object.component.ActionRow;
+import discord4j.core.object.component.Button;
 import discord4j.core.object.entity.Member;
+import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.channel.GuildMessageChannel;
+import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.spec.EmbedCreateSpec;
+import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
 import discord4j.voice.VoiceConnection;
 import reactor.core.publisher.Mono;
 
+import javax.swing.*;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.richtxo.LilMo.PLAYER_MANAGER;
 
@@ -151,7 +163,7 @@ public class Play implements Command {
 
     private void loadSpotifySongs(ChatInputInteractionEvent event, String provider, Snowflake guildId, SpotifyPlaylist playlist) {
         for (SpotifySong song : playlist.getSongs()){
-            PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song.toString()), new AudioLoadResultHandler() {
+            PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
                 @Override
                 public void trackLoaded(AudioTrack audioTrack) {
                     // Shouldn't come in here
@@ -186,45 +198,100 @@ public class Play implements Command {
         else
             finalQuery = String.format("%s: %s", provider, query);
 
-        return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(finalQuery, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack audioTrack) {
-                event.editReply(String.format("Adding song `%s` to queue...", audioTrack.getInfo().title)).block();
-                play(guildId, audioTrack);
-                monoSink.success();
-            }
-
-            @Override
-            public void playlistLoaded(AudioPlaylist audioPlaylist) {
-                if (!audioPlaylist.isSearchResult()){
-                    event.editReply(String.format("Adding playlist: `%s` to queue...", audioPlaylist.getName()));
-                    for (AudioTrack track : audioPlaylist.getTracks())
-                        play(guildId, track);
+        return Mono.create(monoSink -> {
+            PLAYER_MANAGER.loadItem(finalQuery, new AudioLoadResultHandler() {
+                @Override
+                public void trackLoaded(AudioTrack audioTrack) {
+                    event.editReply(String.format("Adding song `%s` to queue...", audioTrack.getInfo().title)).block();
+                    play(guildId, audioTrack);
                     monoSink.success();
                 }
 
+                @Override
+                public void playlistLoaded(AudioPlaylist audioPlaylist) {
+                    if (!audioPlaylist.isSearchResult()) {
+                        event.editReply(String.format("Adding playlist: `%s` to queue...", audioPlaylist.getName()));
+                        for (AudioTrack track : audioPlaylist.getTracks())
+                            play(guildId, track);
+                        monoSink.success();
+                    }
 
-                // TODO Create embedded message to show results and select functions
-                System.out.println("asdfasdfasdf!");
-                for (AudioTrack track : audioPlaylist.getTracks()){
-                    System.out.println(track.getInfo().uri);
+                    event.editReply("Loading selection menu...").block();
+                    EmbedCreateSpec.Builder selectionEmbed = EmbedCreateSpec.builder()
+                            .title(String.format("`%s` Music Selection", Objects.requireNonNull(
+                                    event.getClient().getSelf().block()).getUsername()))
+                            .color(Color.of(0xad0000))
+                            .thumbnail(Objects.requireNonNull(
+                                    event.getInteraction().getMember().orElse(null)).getAvatarUrl())
+                            .description("Select the following by their corresponding numbers.")
+                            .addField("\u200B", "", false)
+                            .footer("Auto cancels in 10 seconds!",
+                                    Objects.requireNonNull(event.getClient().getSelf().block()).getAvatarUrl());
+                    for (int i = 0; i < 5; i++)
+                        selectionEmbed.addField(String.format("`%d` - %s",
+                                i + 1, audioPlaylist.getTracks().get(i).getInfo().title), "", false);
+
+                    Button oneBtn = Button.secondary("1", ReactionEmoji.unicode("1\uFE0F⃣"));
+                    Button twoBtn = Button.secondary("2", ReactionEmoji.unicode("2\uFE0F⃣"));
+                    Button threeBtn = Button.secondary("3", ReactionEmoji.unicode("3\uFE0F⃣"));
+                    Button fourBtn = Button.secondary("4", ReactionEmoji.unicode("4\uFE0F⃣"));
+                    Button fiveBtn = Button.secondary("5", ReactionEmoji.unicode("5\uFE0F⃣"));
+                    Button cancelBtn = Button.secondary("cancel", ReactionEmoji.unicode("❌"));
+
+                    event.getClient().getChannelById(event.getInteraction().getChannelId())
+                            .ofType(GuildMessageChannel.class)
+                            .flatMap(channel -> {
+                                Mono<Message> messageMono = channel.createMessage(selectionEmbed.build())
+                                        .withComponents(ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
+                                                ActionRow.of(cancelBtn));
+
+                                AtomicBoolean hasSelect = new AtomicBoolean(false);
+
+                                Mono<Void> listener = event.getClient().on(ButtonInteractionEvent.class,
+                                    buttonEvent -> {
+                                    String buttonId = buttonEvent.getCustomId();
+                                    hasSelect.set(true);
+                                    if (buttonId.equals("cancel"))
+                                        return buttonEvent.reply(String.format("Canceling search for %s",
+                                                event.getInteraction().getMember().orElse(null)
+                                                        .getNicknameMention())).then();
+
+                                    play(guildId, audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1));
+                                    return buttonEvent.reply(String.format("Adding `%s` into queue!",
+                                        audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1).getInfo().title))
+                                                .then();
+
+                                }).timeout(Duration.ofSeconds(10))
+                                .onErrorResume(ignore -> {
+                                    if (!hasSelect.get())
+                                        return channel.createMessage(String.format(
+                                                "Timeout for music selection, %s!",
+                                                event.getInteraction().getMember().orElse(null)
+                                                        .getNicknameMention())).then();
+                                    return Mono.empty();
+                                })
+                                .then();
+                                return messageMono.then(listener);
+                            })
+                            .subscribe();
+
+                    monoSink.success();
                 }
-            }
 
-            @Override
-            public void noMatches() {
-                event.editReply(String.format("Can't find match to `%s`", finalQuery));
-                monoSink.error(new Exception("No match!"));
-            }
+                @Override
+                public void noMatches() {
+                    event.editReply(String.format("Can't find match to `%s`", finalQuery));
+                    monoSink.error(new Exception("No match!"));
+                }
 
-            @Override
-            public void loadFailed(FriendlyException e) {
-                event.editReply(String.format("Can't play `%s`", finalQuery));
-                monoSink.error(e);
-            }
-        }));
+                @Override
+                public void loadFailed(FriendlyException e) {
+                    event.editReply(String.format("Can't play `%s`", finalQuery));
+                    monoSink.error(e);
+                }
+            });
+        });
     }
-
 
     private void play(Snowflake guildId, AudioTrack track){
         GuildAudioManager.of(guildId).getScheduler().play(track);

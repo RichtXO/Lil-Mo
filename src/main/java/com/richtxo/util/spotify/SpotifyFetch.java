@@ -6,6 +6,7 @@ import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,7 @@ import static com.richtxo.LilMo.LOGGER;
 public class SpotifyFetch {
 
     private final SpotifyApi spotify;
+    private final int LIMIT = 50;
 
     public SpotifyFetch() {
         this.spotify = new SpotifyApi.Builder()
@@ -49,8 +51,17 @@ public class SpotifyFetch {
             for (PlaylistTrack track : playlist.getTracks().getItems())
                 songIDs.add(track.getTrack().getId());
 
+
+            List<Track> tracks = new ArrayList<>();
+            if (songIDs.size() > LIMIT){
+                for (int i = 1; i <= Math.ceil((double) songIDs.size() / LIMIT); i++){
+                    String test = String.join(",", songIDs.subList(LIMIT * (i - 1), Math.min(LIMIT * i, songIDs.size())));
+                    Track[] temp = spotify.getSeveralTracks(test).build().execute();
+                    Collections.addAll(tracks, temp);
+                }
+            }
+
             List<SpotifySong> songs = new ArrayList<>();
-            Track[] tracks = spotify.getSeveralTracks(songIDs.toArray(String[]::new)).build().execute();
             for (Track track : tracks)
                 songs.add(new SpotifySong(track.getName(), track.getArtists()));
 
