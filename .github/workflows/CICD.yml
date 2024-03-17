@@ -1,0 +1,30 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  CD:
+    runs-on: self-hosted
+    environment: prod
+
+    env:
+      TOKEN: ${{ secrets.TOKEN }}
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_SECRET: ${{ secrets.SPOTIFY_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Build Image
+        run: docker compose -f docker-compose.yml build
+
+      - name: Update Lil Mo
+        run: |
+          docker compose -f docker-compose.yml stop lil_mo &&
+          docker compose -f docker-compose.yml rm -f lil_mo &&
+          docker compose -f docker-compose.yml up -d
