@@ -4,6 +4,6 @@ COPY pom.xml .
 COPY src ./src
 RUN mvn package
 
-FROM eclipse-temurin:21.0.2_13-jdk-alpine
+FROM eclipse-temurin:21.0.2_13-jre-alpine
 COPY --from=build /app/target/*jar-with-dependencies.jar /Lil-Mo.jar
 ENTRYPOINT ["java","-jar","Lil-Mo.jar"]
