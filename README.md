@@ -9,6 +9,8 @@
 ## Getting Started
 It's easy to get started via Docker containers! Also need a valid Discord App Token and Spotify Premium Token!
 
+[Discord Invite Link](https://discord.com/oauth2/authorize?client_id=1216105100448108584&permissions=3145728&scope=bot)
+
 ### Prerequisites
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 * [Discord Token](https://discord.com/developers/)
