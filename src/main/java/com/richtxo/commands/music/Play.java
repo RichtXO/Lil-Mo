@@ -253,7 +253,8 @@ public class Play implements Command {
                                                 audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1).getInfo().title))
                                         .then();
 
-                            }).timeout(Duration.ofSeconds(10))
+                            })
+                    .timeout(Duration.ofSeconds(10))
                     .onErrorResume(ignore -> {
                         if (!hasSelect.get())
                             return event.editReply(String.format(
