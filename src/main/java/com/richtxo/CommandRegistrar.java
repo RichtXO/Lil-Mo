@@ -32,7 +32,7 @@ public class CommandRegistrar {
 
         final ApplicationService appService = restClient.getApplicationService();
         final long appID = restClient.getApplicationId().block();
-        final long guildID = Long.parseLong(System.getenv("TEST_SERVER"));
+        final long guildID = Long.parseLong((System.getenv("TEST_SERVER") == null ? "9999" : System.getenv("TEST_SERVER")));
         List<ApplicationCommandRequest> commands = new ArrayList<>();
 
         for (String json : listFiles()){
@@ -45,10 +45,12 @@ public class CommandRegistrar {
                 .doOnNext(cmd -> LOGGER.debug("Successfully registered Global Command: " + cmd.name()))
                 .doOnError(err -> LOGGER.error("Failed to register global commands: " + err))
                 .subscribe();
-        appService.bulkOverwriteGuildApplicationCommand(appID, guildID, commands)
-                .doOnNext(cmd -> LOGGER.debug("Successfully registered Guild command: " + cmd.name()))
-                .doOnError(err -> LOGGER.error("Failed to register guild commands: " + err))
-                .subscribe();
+
+        if (guildID != 9999)
+            appService.bulkOverwriteGuildApplicationCommand(appID, guildID, commands)
+                    .doOnNext(cmd -> LOGGER.debug("Successfully registered Guild command: " + cmd.name()))
+                    .doOnError(err -> LOGGER.error("Failed to register guild commands: " + err))
+                    .subscribe();
     }
 
     private List<String> listFiles() throws IOException {
