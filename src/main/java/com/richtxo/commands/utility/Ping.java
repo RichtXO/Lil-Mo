@@ -31,7 +31,7 @@ public class Ping implements Command {
                 .map(GatewayClient::getResponseTime);
 
         return latency.map(duration ->
-                event.reply().withContent(String.format("API Latency: `%d ms`", duration.toMillis()))).
-                orElseGet(() -> event.reply().withContent(""));
+                event.reply(String.format("API Latency: `%d ms`", duration.toMillis()))).
+                orElseGet(() -> event.reply("API Latency: N/A"));
     }
 }
