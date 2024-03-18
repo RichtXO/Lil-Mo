@@ -20,6 +20,11 @@ jobs:
         with:
           ref: master
 
+      - name: Build New Image
+        run: docker compose -f docker-compose.yml build
+
       - name: Update Lil Mo
         run: |
-          docker compose -f docker-compose.yml up -d --build
+          docker compose -f docker-compose.yml stop lil_mo &&
+          docker compose -f docker-compose.yml rm -f lil_mo &&
+          docker compose -f docker-compose.yml up -d
