@@ -25,6 +25,6 @@ jobs:
 
       - name: Update Lil Mo
         run: |
-          docker compose -f docker-compose.yml stop lil_mo &&
-          docker compose -f docker-compose.yml rm -f lil_mo &&
+          docker compose -f docker-compose.yml stop lil-mo &&
+          docker compose -f docker-compose.yml rm -f lil-mo &&
           docker compose -f docker-compose.yml up -d
