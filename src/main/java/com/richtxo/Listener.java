@@ -15,7 +15,7 @@ public class Listener {
     private final static List<Command> commands = new ArrayList<>();
 
     static {
-        // Adding cmds here
+        // Adding commands here
         commands.add(new Ping());
 
         // Music Commands
