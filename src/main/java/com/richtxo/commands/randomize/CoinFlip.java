@@ -3,8 +3,6 @@ package com.richtxo.commands.randomize;
 import com.richtxo.commands.Command;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import reactor.core.publisher.Mono;
-
-import java.util.Objects;
 import java.util.Random;
 
 public class CoinFlip implements Command {
