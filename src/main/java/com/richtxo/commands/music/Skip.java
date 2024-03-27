@@ -8,10 +8,7 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.entity.Member;
-import discord4j.voice.VoiceConnection;
 import reactor.core.publisher.Mono;
-
-import java.util.Objects;
 
 public class Skip implements Command {
     @Override

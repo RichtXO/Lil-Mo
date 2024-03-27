@@ -6,10 +6,8 @@ import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Member;
-import discord4j.voice.VoiceConnection;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
 
 public class Stop implements Command {
     @Override

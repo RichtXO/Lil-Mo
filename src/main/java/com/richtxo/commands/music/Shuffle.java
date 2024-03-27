@@ -9,8 +9,6 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
 
-import java.util.Objects;
-
 public class Shuffle implements Command {
     @Override
     public String getName() {
