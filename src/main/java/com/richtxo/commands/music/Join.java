@@ -2,12 +2,10 @@ package com.richtxo.commands.music;
 
 import com.richtxo.audio.GuildAudioManager;
 import com.richtxo.commands.Command;
-import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.VoiceStateUpdateEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Member;
-import discord4j.core.object.entity.channel.MessageChannel;
 import discord4j.core.object.entity.channel.VoiceChannel;
 import discord4j.voice.AudioProvider;
 import org.reactivestreams.Publisher;
@@ -15,9 +13,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.Flow;
 
 public class Join implements Command {
     @Override
@@ -50,7 +45,7 @@ public class Join implements Command {
                     }
                     AudioProvider voice = GuildAudioManager.of(member.getGuildId()).getProvider();
                     event.reply(String.format("Joining `\uD83d\uDD0A %s`!", voiceChannel.getName()))
-                            .then(autoDisconnect(voiceChannel, voice));
+                            .then(autoDisconnect(voiceChannel, voice)).subscribe();
                 })
                 .doOnError(t -> event.reply("Something happened..."))
                 .then();
