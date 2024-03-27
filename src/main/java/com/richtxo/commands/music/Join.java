@@ -37,27 +37,22 @@ public class Join implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
+        Member member = event.getInteraction().getMember().get();
 
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
-                .getNicknameMention();
-
-        return event.deferReply()
-                .then(Mono.justOrEmpty(event.getInteraction().getMember()))
-                .flatMap(Member::getVoiceState)
+        return member.getVoiceState()
                 .flatMap(VoiceState::getChannel)
-                .flatMap(channel -> {
-                    Snowflake guildId = event.getInteraction().getGuildId().orElse(null);
-                    AudioProvider voice = GuildAudioManager.of(guildId).getProvider();
-
-                    return event.editReply(String.format("Joining `\uD83d\uDD0A %s`!", channel.getName()))
-                            .then(autoDisconnect(channel, voice));
+                .publishOn(Schedulers.boundedElastic())
+                .doOnSuccess(voiceChannel -> {
+                    if (voiceChannel == null){
+                        event.reply(String.format("%s must join a voice channel first!",
+                                member.getNicknameMention())).subscribe();
+                        return;
+                    }
+                    AudioProvider voice = GuildAudioManager.of(member.getGuildId()).getProvider();
+                    event.reply(String.format("Joining `\uD83d\uDD0A %s`!", voiceChannel.getName()))
+                            .then(autoDisconnect(voiceChannel, voice));
                 })
-                // Detecting if user is not in voice channel
-                .switchIfEmpty(event.editReply(
-                        String.format("%s must join a voice channel first!", user)).then())
-                .onErrorResume(t -> {
-                    return event.editReply("Something happened...").then();
-                })
+                .doOnError(t -> event.reply("Something happened..."))
                 .then();
     }
 
@@ -78,7 +73,8 @@ public class Join implements Command {
 
                     // As people join and leave `channel`, check if the bot is alone.
                     Mono<Void> onEvent = channel.getClient().getEventDispatcher().on(VoiceStateUpdateEvent.class)
-                            .filter(event -> event.getOld().flatMap(VoiceState::getChannelId).map(channel.getId()::equals).orElse(false))
+                            .filter(event -> event.getOld().flatMap(VoiceState::getChannelId)
+                                    .map(channel.getId()::equals).orElse(false))
                             .filterWhen(ignored -> voiceStateCounter)
                             .next()
                             .then();
