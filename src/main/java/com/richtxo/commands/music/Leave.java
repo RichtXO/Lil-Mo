@@ -45,7 +45,7 @@ public class Leave implements Command {
                                     voiceChannel.sendDisconnectVoiceState().subscribe();
                             })
                             .flatMap(VoiceConnection::disconnect)
-                            .then(event.reply(String.format("Leaving `\\uD83d\\uDD0A %s`!", voiceChannel.getName())))
+                            .then(event.reply(String.format("Leaving `\uD83d\uDD0A %s`!", voiceChannel.getName())))
                             .subscribe();
                 })
                 .doOnError(t -> event.reply("Something happened..."))
