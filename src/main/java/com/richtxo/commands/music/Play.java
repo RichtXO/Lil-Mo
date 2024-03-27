@@ -18,20 +18,16 @@ import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
 import discord4j.core.object.entity.Member;
-import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.channel.GuildMessageChannel;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
-import discord4j.voice.VoiceConnection;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import javax.swing.*;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.richtxo.LilMo.PLAYER_MANAGER;
@@ -54,49 +50,35 @@ public class Play implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        String searchQuery = event.getOption("link-or-query")
-                .flatMap(ApplicationCommandInteractionOption::getValue)
-                .map(ApplicationCommandInteractionOptionValue::asString).orElse("");
 
-        Boolean ifPriority = event.getOption("priority")
-                .flatMap(ApplicationCommandInteractionOption::getValue)
-                .map(ApplicationCommandInteractionOptionValue::asBoolean).orElse(false);
+        Member member = event.getInteraction().getMember().get();
 
-        String provider = event.getOption("provider")
-                .flatMap(ApplicationCommandInteractionOption::getValue)
-                .map(ApplicationCommandInteractionOptionValue::asString).orElse("ytsearch");
-
-
-        // Joining into voice channel if not already in one
-        Snowflake guildId = event.getInteraction().getMember().get().getGuildId();
-        VoiceState userVS = event.getInteraction().getMember().get().getVoiceState().block();
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
-                .getNicknameMention();
-
-
-        if (userVS == null)
-            return event.reply().withContent(String.format("%s is not in any voice channels", user));
-
-        VoiceConnection vc = event.getClient().getVoiceConnectionRegistry().getVoiceConnection(guildId).block();
-        if (vc != null && !Objects.equals(vc.getChannelId().block(), userVS.getChannelId().get())){
-            String bot = Objects.requireNonNull(event.getClient().getSelf().block()).getUsername();
-            return event.reply().withContent(String.format("%s is not in the same voice channel as %s", user, bot));
-        }
-
-
-        return event.deferReply()
-                .then(Mono.justOrEmpty(event.getInteraction().getMember()))
-                .flatMap(Member::getVoiceState)
+        return member.getVoiceState()
                 .flatMap(VoiceState::getChannel)
-                .flatMap(channel -> {
+                .publishOn(Schedulers.boundedElastic())
+                .doOnSuccess(voiceChannel -> {
+                    if (voiceChannel == null){
+                        event.reply(String.format("%s is not in any voice channels",
+                                member.getNicknameMention())).subscribe();
+                        return;
+                    }
+
+                    String searchQuery = event.getOption("link-or-query")
+                            .flatMap(ApplicationCommandInteractionOption::getValue)
+                            .map(ApplicationCommandInteractionOptionValue::asString).orElse("");
+                    String provider = event.getOption("provider")
+                            .flatMap(ApplicationCommandInteractionOption::getValue)
+                            .map(ApplicationCommandInteractionOptionValue::asString).orElse("ytsearch");
+                    Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                     AudioProvider voice = GuildAudioManager.of(guildId).getProvider();
+
                     if (isURL(searchQuery) && searchQuery.toUpperCase().contains("spotify".toUpperCase()))
-                        return Join.autoDisconnect(channel, voice).and(loadSpotifyItem(event, searchQuery, provider));
-                    return Join.autoDisconnect(channel, voice).and(loadItem(event, searchQuery, provider));
+                        Join.autoDisconnect(voiceChannel, voice)
+                                .and(loadSpotifyItem(event, searchQuery, provider)).block();
+
+                    Join.autoDisconnect(voiceChannel, voice).and(loadItem(event, searchQuery, provider)).block();
                 })
-                .onErrorResume(t -> {
-                    return event.editReply("Something happened...").then();
-                })
+                .doOnError(t -> event.reply("Something happened..."))
                 .then();
     }
 
@@ -115,7 +97,7 @@ public class Play implements Command {
 
         if (url.toUpperCase().contains("track".toUpperCase())){
             SpotifySong song = spotifyFetch.fetchSong(url);
-            return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song.toString())
+            return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song)
                     , new AudioLoadResultHandler() {
                 @Override
                 public void trackLoaded(AudioTrack audioTrack) {
@@ -134,13 +116,13 @@ public class Play implements Command {
 
                 @Override
                 public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", song.toString())).block();
+                    event.editReply(String.format("Can't find match to `%s`", song)).block();
                     monoSink.error(new Exception("No match!"));
                 }
 
                 @Override
                 public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", song.toString())).block();
+                    event.editReply(String.format("Can't play `%s`", song)).block();
                     monoSink.error(e);
                 }
             }));
@@ -167,7 +149,6 @@ public class Play implements Command {
                 @Override
                 public void trackLoaded(AudioTrack audioTrack) {
                     // Shouldn't come in here
-                    return;
                 }
 
                 @Override
