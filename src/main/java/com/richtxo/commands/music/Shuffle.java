@@ -5,6 +5,8 @@ import com.richtxo.audio.TrackScheduler;
 import com.richtxo.commands.Command;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.VoiceState;
+import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
@@ -27,12 +29,22 @@ public class Shuffle implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        Snowflake guildId = Objects.requireNonNull(event.getInteraction().getMember().orElse(null)).getGuildId();
-        TrackScheduler scheduler = GuildAudioManager.of(guildId).getScheduler();
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
-                .getNicknameMention();
+        Member member = event.getInteraction().getMember().get();
 
-        scheduler.shuffle();
-        return event.reply().withContent(String.format("%s has shuffled the queue!", user));
+        return member.getVoiceState()
+                .flatMap(VoiceState::getChannel)
+                .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
+                .defaultIfEmpty(false)
+                .flatMap(isConnected -> {
+                    if (isConnected){
+                        Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
+                        TrackScheduler scheduler = GuildAudioManager.of(guildId).getScheduler();
+                        scheduler.shuffle();
+                        return event.reply(String.format("%s has shuffled the queue!", member.getNicknameMention()));
+                    }
+
+                    return event.reply(
+                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                });
     }
 }

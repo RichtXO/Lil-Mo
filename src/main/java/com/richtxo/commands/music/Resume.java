@@ -5,6 +5,8 @@ import com.richtxo.commands.Command;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.VoiceState;
+import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
@@ -27,15 +29,26 @@ public class Resume implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        Snowflake guildId = Objects.requireNonNull(event.getInteraction().getMember().orElse(null)).getGuildId();
-        AudioPlayer player = GuildAudioManager.of(guildId).getPlayer();
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
-                .getNicknameMention();
+        Member member = event.getInteraction().getMember().get();
 
-        if (!player.isPaused())
-            return event.reply().withContent(String.format("Already playing music, %s!", user));
+        return member.getVoiceState()
+                .flatMap(VoiceState::getChannel)
+                .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
+                .defaultIfEmpty(false)
+                .flatMap(isConnected -> {
+                    if (isConnected){
+                        Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
+                        AudioPlayer player = GuildAudioManager.of(guildId).getPlayer();
 
-        player.setPaused(false);
-        return event.reply().withContent(String.format("%s resumed music!", user));
+                        if (!player.isPaused())
+                            return event.reply(String.format("Already playing music, %s!", member.getNicknameMention()));
+
+                        player.setPaused(false);
+                        return event.reply(String.format("%s resumed music!", member.getNicknameMention()));
+                    }
+
+                    return event.reply(
+                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                });
     }
 }

@@ -5,6 +5,7 @@ import com.richtxo.commands.Command;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.VoiceState;
+import discord4j.core.object.entity.Member;
 import discord4j.voice.VoiceConnection;
 import reactor.core.publisher.Mono;
 
@@ -28,23 +29,22 @@ public class Stop implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        Snowflake guildId = event.getInteraction().getMember().get().getGuildId();
-        VoiceState userVS = event.getInteraction().getMember().get().getVoiceState().block();
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null))
-                .getNicknameMention();
+        Member member = event.getInteraction().getMember().get();
 
-        if (userVS == null)
-            return event.reply().withContent(String.format("%s is not in any voice channels", user));
+        return member.getVoiceState()
+                .flatMap(VoiceState::getChannel)
+                .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
+                .defaultIfEmpty(false)
+                .flatMap(isConnected -> {
+                    if (isConnected){
+                        Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
+                        GuildAudioManager.of(guildId).getPlayer().stopTrack();
+                        GuildAudioManager.of(guildId).getScheduler().clear();
+                        return event.reply("Stopping music and clearing queue!");
+                    }
 
-        VoiceConnection vc = event.getClient().getVoiceConnectionRegistry().getVoiceConnection(guildId).block();
-        if (vc != null && !Objects.equals(vc.getChannelId().block(), userVS.getChannelId().get())){
-            String bot = Objects.requireNonNull(event.getClient().getSelf().block()).getUsername();
-            return event.reply().withContent(String.format("%s is not in the same voice channel as %s", user, bot));
-        }
-
-        GuildAudioManager.of(guildId).getPlayer().stopTrack();
-        GuildAudioManager.of(guildId).getScheduler().clear();
-
-        return event.reply().withContent("Stopping music and clearing queue!");
+                    return event.reply(
+                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                });
     }
 }
