@@ -25,11 +25,12 @@ public class CoinFlip implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null)).getNicknameMention();
+        String user = ((event.getInteraction().getMember().isPresent()) ?
+                event.getInteraction().getMember().get().getNicknameMention() : "`N/A`");
 
         if (new Random().nextInt(2) == 0)
-            return event.reply().withContent(String.format("@%s flipped `Heads`!", user)).then();
+            return event.reply(String.format("@%s flipped `Heads`!", user)).then();
 
-        return event.reply().withContent(String.format("%s flipped `Tails`!", user)).then();
+        return event.reply(String.format("%s flipped `Tails`!", user)).then();
     }
 }

@@ -25,7 +25,9 @@ public class D20 implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        String user = Objects.requireNonNull(event.getInteraction().getMember().orElse(null)).getNicknameMention();
-        return event.reply().withContent(String.format("%s has rolled a `%d`", user, new Random().nextInt(20) + 1));
+        String user = ((event.getInteraction().getMember().isPresent()) ?
+                event.getInteraction().getMember().get().getNicknameMention() : "`N/A`");
+
+        return event.reply(String.format("%s has rolled a `%d`", user, new Random().nextInt(20) + 1));
     }
 }
