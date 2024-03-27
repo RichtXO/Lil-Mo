@@ -41,8 +41,12 @@ public class Leave implements Command {
                     voiceChannel.getVoiceConnection()
                             .publishOn(Schedulers.boundedElastic())
                             .doOnSuccess(voiceConnection -> {
-                                if (voiceConnection == null)
-                                    voiceChannel.sendDisconnectVoiceState().subscribe();
+                                if (voiceConnection == null) {
+                                    voiceChannel.sendDisconnectVoiceState()
+                                            .then(event.reply("Not in any voice channel!"))
+                                            .subscribe();
+                                    return;
+                                }
                             })
                             .flatMap(VoiceConnection::disconnect)
                             .then(event.reply(String.format("Leaving `\uD83d\uDD0A %s`!", voiceChannel.getName())))
