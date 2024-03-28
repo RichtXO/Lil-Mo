@@ -45,7 +45,6 @@ public class Leave implements Command {
                                     voiceChannel.sendDisconnectVoiceState()
                                             .then(event.reply("Not in any voice channel!"))
                                             .subscribe();
-                                    return;
                                 }
                             })
                             .flatMap(VoiceConnection::disconnect)
