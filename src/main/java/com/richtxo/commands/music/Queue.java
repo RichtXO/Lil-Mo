@@ -112,7 +112,7 @@ public class Queue implements Command {
                                 Objects.requireNonNull(buttonEvent.getInteraction().getMember().orElse(null))
                                         .getNicknameMention()));
                     })
-                    .timeout(Duration.ofSeconds(10))
+                    .timeout(Duration.ofSeconds(30))
                     .onErrorResume(ignore -> {
                         if (!ifDone.get())
                             return event.editReply(String.format(
