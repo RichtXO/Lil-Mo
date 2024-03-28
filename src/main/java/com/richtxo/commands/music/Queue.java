@@ -68,9 +68,11 @@ public class Queue implements Command {
                     AudioTrackInfo current = GuildAudioManager.of(guildId).getPlayer().getPlayingTrack().getInfo();
                     long totalTime = current.length;
                     List<EmbedCreateSpec.Builder> paginationBuilder = new ArrayList<>();
-                    for (int pagination = 0; pagination < musicQueue.size() / 10; pagination++){
+                    for (int pagination = 0; pagination < Math.ceil((double) musicQueue.size() / 10); pagination++){
                         EmbedCreateSpec.Builder builder = getQueueBase(event, musicQueue, current);
-                        for (int i = 0; i < Math.min(musicQueue.size() - (pagination * 10), 10); i++){
+
+                        for (int i = 0; i < Math.min(
+                                Math.min(musicQueue.size(), musicQueue.size() - (pagination * 10)), 10); i++){
                             AudioTrackInfo track = musicQueue.get(i + (pagination * 10)).getInfo();
                             totalTime += track.length;
                             long min = (track.length / (1000 * 60)) % 60;
@@ -92,7 +94,8 @@ public class Queue implements Command {
                         if (buttonId.equals("next")){
                             page.addAndGet(1);
                             return buttonEvent.reply().withEmbeds(pagination.get(page.get())).withComponents(
-                                    ActionRow.of(prevBtn, nextBtn.disabled(page.get() == pagination.size() - 1), doneDtn));
+                                    ActionRow.of(prevBtn,
+                                            nextBtn.disabled(page.get() == pagination.size() - 1), doneDtn));
                         }
                         if (buttonId.equals("prev")){
                             page.decrementAndGet();
@@ -108,7 +111,8 @@ public class Queue implements Command {
 
                     return event.reply()
                             .withEmbeds(pagination.getFirst())
-                            .withComponents(ActionRow.of(prevBtn.disabled(), nextBtn, doneDtn))
+                            .withComponents(ActionRow.of(prevBtn.disabled(),
+                                    (page.get() == pagination.size() - 1 ? nextBtn.disabled() : nextBtn), doneDtn))
                             .then(buttonListener);
                 });
     }
