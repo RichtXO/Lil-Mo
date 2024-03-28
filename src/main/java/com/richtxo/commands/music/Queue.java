@@ -15,9 +15,11 @@ import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Queue implements Command {
@@ -89,6 +91,7 @@ public class Queue implements Command {
                     Button doneDtn = Button.secondary("done", ReactionEmoji.unicode("✅"));
 
                     AtomicInteger page = new AtomicInteger();
+                    AtomicBoolean ifDone = new AtomicBoolean(false);
                     Mono<Void> buttonListener = event.getClient().on(ButtonInteractionEvent.class, buttonEvent -> {
                         String buttonId = buttonEvent.getCustomId();
                         if (buttonId.equals("next")){
@@ -104,9 +107,19 @@ public class Queue implements Command {
                         }
 
                         // When done button is pressed
+                        ifDone.set(true);
                         return buttonEvent.reply(String.format("Exiting out of queue, %s!",
                                 Objects.requireNonNull(buttonEvent.getInteraction().getMember().orElse(null))
                                         .getNicknameMention()));
+                    })
+                    .timeout(Duration.ofSeconds(10))
+                    .onErrorResume(ignore -> {
+                        if (!ifDone.get())
+                            return event.editReply(String.format(
+                                    "Timeout for queue, %s!",
+                                    event.getInteraction().getMember().orElse(null)
+                                            .getNicknameMention())).then();
+                        return Mono.empty();
                     }).then();
 
                     return event.reply()
