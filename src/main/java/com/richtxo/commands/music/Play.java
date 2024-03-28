@@ -18,6 +18,7 @@ import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
 import discord4j.core.object.entity.Member;
+import discord4j.core.object.entity.User;
 import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
@@ -148,29 +149,34 @@ public class Play implements Command {
     private void loadSpotifySongs(ChatInputInteractionEvent event, String provider, Snowflake guildId,
                                   SpotifyPlaylist playlist) {
         for (SpotifySong song : playlist.getSongs()){
-            PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
-                @Override
-                public void trackLoaded(AudioTrack audioTrack) {
-                    // Shouldn't come in here
-                }
-
-                @Override
-                public void playlistLoaded(AudioPlaylist audioPlaylist) {
-                    if (audioPlaylist.isSearchResult()){
-                        play(guildId, audioPlaylist.getTracks().getFirst());
+            Mono.create(monoSink -> {
+                PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
+                    @Override
+                    public void trackLoaded(AudioTrack audioTrack) {
+                        // Shouldn't come in here
                     }
-                }
 
-                @Override
-                public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", song.toString())).subscribe();
-                }
+                    @Override
+                    public void playlistLoaded(AudioPlaylist audioPlaylist) {
+                        if (audioPlaylist.isSearchResult()) {
+                            play(guildId, audioPlaylist.getTracks().getFirst());
+                            monoSink.success();
+                        }
+                    }
 
-                @Override
-                public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", song.toString())).subscribe();
-                }
-            });
+                    @Override
+                    public void noMatches() {
+                        event.editReply(String.format("Can't find match to `%s`", song.toString())).subscribe();
+                        monoSink.error(new Exception("Not Found"));
+                    }
+
+                    @Override
+                    public void loadFailed(FriendlyException e) {
+                        event.editReply(String.format("Can't play `%s`", song.toString())).subscribe();
+                        monoSink.error(e);
+                    }
+                });
+            }).subscribe();
         }
     }
 
@@ -203,16 +209,15 @@ public class Play implements Command {
                         return;
                     }
 
+                    User bot = event.getClient().getSelf().block();
                     EmbedCreateSpec.Builder selectionEmbed = EmbedCreateSpec.builder()
-                            .title(String.format("`%s` Music Selection", Objects.requireNonNull(
-                                    event.getClient().getSelf().block()).getUsername()))
+                            .title(String.format("`%s` Music Selection", bot.getUsername()))
                             .color(Color.of(0xad0000))
                             .thumbnail(Objects.requireNonNull(
                                     event.getInteraction().getMember().orElse(null)).getAvatarUrl())
                             .description("Select the following by their corresponding numbers.")
                             .addField("\u200B", "", false)
-                            .footer("Auto cancels in 10 seconds!",
-                                    Objects.requireNonNull(event.getClient().getSelf().block()).getAvatarUrl());
+                            .footer("Auto cancels in 10 seconds!", bot.getAvatarUrl());
                     for (int i = 0; i < 5; i++)
                         selectionEmbed.addField(String.format("`%d` - %s",
                                 i + 1, audioPlaylist.getTracks().get(i).getInfo().title), "", false);
@@ -251,7 +256,10 @@ public class Play implements Command {
 
                     event.editReply().withEmbeds(selectionEmbed.build()).withComponents(
                             ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
-                            ActionRow.of(cancelBtn)).then(listener).subscribe();
+                            ActionRow.of(cancelBtn)).then(listener)
+                            .doOnError(t -> {
+                                System.out.println("error!!!!!!!!!!!!" + t);
+                            }).subscribe();
                     monoSink.success();
                 }
 
