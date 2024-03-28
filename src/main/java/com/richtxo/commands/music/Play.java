@@ -203,7 +203,6 @@ public class Play implements Command {
                         return;
                     }
 
-                    event.editReply("Loading selection menu...").subscribe();
                     EmbedCreateSpec.Builder selectionEmbed = EmbedCreateSpec.builder()
                             .title(String.format("`%s` Music Selection", Objects.requireNonNull(
                                     event.getClient().getSelf().block()).getUsername()))
@@ -248,8 +247,7 @@ public class Play implements Command {
                                     event.getInteraction().getMember().orElse(null)
                                             .getNicknameMention())).then();
                         return Mono.empty();
-                    })
-                    .then();
+                    }).then();
 
                     event.editReply().withEmbeds(selectionEmbed.build()).withComponents(
                             ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
@@ -272,7 +270,5 @@ public class Play implements Command {
         );
     }
 
-    private void play(Snowflake guildId, AudioTrack track){
-        GuildAudioManager.of(guildId).getScheduler().play(track);
-    }
+    private void play(Snowflake guildId, AudioTrack track){ GuildAudioManager.of(guildId).getScheduler().play(track); }
 }
