@@ -14,7 +14,7 @@ import static com.richtxo.LilMo.LOGGER;
 public class SpotifyFetch {
 
     private final SpotifyApi spotify;
-    private final int LIMIT = 60;
+    private final int LIMIT = 55;
 
     public SpotifyFetch() {
         this.spotify = new SpotifyApi.Builder()
