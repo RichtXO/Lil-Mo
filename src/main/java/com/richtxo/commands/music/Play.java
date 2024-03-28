@@ -110,20 +110,21 @@ public class Play implements Command {
                 public void playlistLoaded(AudioPlaylist audioPlaylist) {
                     // Play the first result
                     if (audioPlaylist.isSearchResult()){
-                        event.editReply(String.format("Adding spotify song `%s` to queue...", song.getTitle())).block();
+                        event.editReply(String.format("Adding spotify song `%s` to queue...", song.getTitle()))
+                                .subscribe();
                         play(guildId, audioPlaylist.getTracks().getFirst());
                     }
                 }
 
                 @Override
                 public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", song)).block();
+                    event.editReply(String.format("Can't find match to `%s`", song)).subscribe();
                     monoSink.error(new Exception("No match!"));
                 }
 
                 @Override
                 public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", song)).block();
+                    event.editReply(String.format("Can't play `%s`", song)).subscribe();
                     monoSink.error(e);
                 }
             }));
@@ -144,7 +145,8 @@ public class Play implements Command {
         return event.editReply("Couldn't find spotify link!").then();
     }
 
-    private void loadSpotifySongs(ChatInputInteractionEvent event, String provider, Snowflake guildId, SpotifyPlaylist playlist) {
+    private void loadSpotifySongs(ChatInputInteractionEvent event, String provider, Snowflake guildId,
+                                  SpotifyPlaylist playlist) {
         for (SpotifySong song : playlist.getSongs()){
             PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
                 @Override
@@ -161,19 +163,19 @@ public class Play implements Command {
 
                 @Override
                 public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", song.toString())).block();
+                    event.editReply(String.format("Can't find match to `%s`", song.toString())).subscribe();
                 }
 
                 @Override
                 public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", song.toString())).block();
+                    event.editReply(String.format("Can't play `%s`", song.toString())).subscribe();
                 }
             });
         }
     }
 
     private Mono<Object> loadItem(ChatInputInteractionEvent event, String query, String provider){
-        Snowflake guildId = event.getInteraction().getGuildId().orElse(null);
+        Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
         String finalQuery;
         if (isURL(query))
                 finalQuery = query;
@@ -184,7 +186,8 @@ public class Play implements Command {
             PLAYER_MANAGER.loadItem(finalQuery, new AudioLoadResultHandler() {
                 @Override
                 public void trackLoaded(AudioTrack audioTrack) {
-                    event.editReply(String.format("Adding song `%s` to queue...", audioTrack.getInfo().title)).block();
+                    event.editReply(String.format("Adding song `%s` to queue...", audioTrack.getInfo().title))
+                            .subscribe();
                     play(guildId, audioTrack);
                     monoSink.success();
                 }
@@ -192,13 +195,15 @@ public class Play implements Command {
                 @Override
                 public void playlistLoaded(AudioPlaylist audioPlaylist) {
                     if (!audioPlaylist.isSearchResult()) {
-                        event.editReply(String.format("Adding playlist: `%s` to queue...", audioPlaylist.getName()));
+                        event.editReply(String.format("Adding playlist: `%s` to queue...",
+                                audioPlaylist.getName())).subscribe();
                         for (AudioTrack track : audioPlaylist.getTracks())
                             play(guildId, track);
                         monoSink.success();
+                        return;
                     }
 
-                    event.editReply("Loading selection menu...").block();
+                    event.editReply("Loading selection menu...").subscribe();
                     EmbedCreateSpec.Builder selectionEmbed = EmbedCreateSpec.builder()
                             .title(String.format("`%s` Music Selection", Objects.requireNonNull(
                                     event.getClient().getSelf().block()).getUsername()))
@@ -213,11 +218,11 @@ public class Play implements Command {
                         selectionEmbed.addField(String.format("`%d` - %s",
                                 i + 1, audioPlaylist.getTracks().get(i).getInfo().title), "", false);
 
-                    Button oneBtn = Button.secondary("1", ReactionEmoji.unicode("1\uFE0F⃣"));
-                    Button twoBtn = Button.secondary("2", ReactionEmoji.unicode("2\uFE0F⃣"));
-                    Button threeBtn = Button.secondary("3", ReactionEmoji.unicode("3\uFE0F⃣"));
-                    Button fourBtn = Button.secondary("4", ReactionEmoji.unicode("4\uFE0F⃣"));
-                    Button fiveBtn = Button.secondary("5", ReactionEmoji.unicode("5\uFE0F⃣"));
+                    Button oneBtn = Button.secondary("1", ReactionEmoji.unicode("1️⃣"));
+                    Button twoBtn = Button.secondary("2", ReactionEmoji.unicode("2️⃣"));
+                    Button threeBtn = Button.secondary("3", ReactionEmoji.unicode("3️⃣"));
+                    Button fourBtn = Button.secondary("4", ReactionEmoji.unicode("4️⃣"));
+                    Button fiveBtn = Button.secondary("5", ReactionEmoji.unicode("5️⃣"));
                     Button cancelBtn = Button.secondary("cancel", ReactionEmoji.unicode("❌"));
 
                     AtomicBoolean hasSelect = new AtomicBoolean(false);
@@ -231,10 +236,9 @@ public class Play implements Command {
                                                     .getNicknameMention())).then();
 
                                 play(guildId, audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1));
-                                return buttonEvent.reply(String.format("Adding `%s` into queue!",
-                                                audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1).getInfo().title))
-                                        .then();
-
+                                return buttonEvent
+                                        .reply(String.format("Adding `%s` into queue!", audioPlaylist.getTracks()
+                                                .get(Integer.parseInt(buttonId) - 1).getInfo().title)).then();
                             })
                     .timeout(Duration.ofSeconds(10))
                     .onErrorResume(ignore -> {
