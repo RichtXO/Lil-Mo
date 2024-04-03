@@ -57,9 +57,8 @@ public class Queue implements Command {
                         EmbedCreateSpec.Builder currentSong = EmbedCreateSpec.builder()
                                 .title(String.format("Current song: %s", current.title))
                                 .color(Color.of(0xad0000))
-                                .thumbnail((current.artworkUrl==null ? user.getAvatarUrl() : current.artworkUrl))
+                                .thumbnail(user.getAvatarUrl())
                                 .addField("Author", (current.author != null ? current.author : "N/A"), true)
-                                .addField("ISRC", (current.isrc != null ? current.isrc : "N/A"), true)
                                 .addField("URI", (current.uri != null ? current.uri : "N/A"), false)
                                 .footer(String.format("Total Time: %02d:%02d:%02d", totalHour, totalMin, totalSec),
                                         user.getAvatarUrl());
@@ -117,7 +116,7 @@ public class Queue implements Command {
                         if (!ifDone.get())
                             return event.editReply(String.format(
                                     "Timeout for queue, %s!",
-                                    event.getInteraction().getMember().orElse(null)
+                                    event.getInteraction().getMember().get()
                                             .getNicknameMention())).then();
                         return Mono.empty();
                     }).then();
