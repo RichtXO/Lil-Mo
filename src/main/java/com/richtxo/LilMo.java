@@ -27,10 +27,6 @@ public class LilMo {
 
     public static void main(String[] args){
         final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN"))
-//                .onClientResponse(
-//                        ResponseFunction.retryWhen(
-//                                RouteMatcher.any(),
-//                                Retry.anyOf(SslHandler.class)))
                 .build()
                 .gateway()
                 .setInitialPresence(s -> ClientPresence.online(
