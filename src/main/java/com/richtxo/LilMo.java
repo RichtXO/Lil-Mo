@@ -13,6 +13,10 @@ import discord4j.core.object.presence.ClientPresence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
+
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 public class LilMo {
     public static final Logger LOGGER = LoggerFactory.getLogger(LilMo.class);
@@ -30,10 +34,10 @@ public class LilMo {
     public static void main(String[] args){
         final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN"))
                 .setReactorResources(ReactorResources.builder()
-                        .httpClient(HttpClient.create()
-                                .compress(true)
-                                .keepAlive(true)
-                                .followRedirect(true).secure())
+                        .httpClient(ReactorResources
+                                .newHttpClient(ConnectionProvider.builder("custom")
+                                        .maxIdleTime(Duration.ofDays(2))
+                                        .build()))
                         .build())
                 .build()
                 .gateway()
@@ -47,7 +51,7 @@ public class LilMo {
             assert client != null;
             new CommandRegistrar(client.getRestClient()).registerCmds();
         } catch (Exception e) {
-            LOGGER.error("Error trying to register commands", e);
+            LOGGER.error("Error trying to register commands: ", e);
         }
 
         client.on(ChatInputInteractionEvent.class, Listener::handle)
