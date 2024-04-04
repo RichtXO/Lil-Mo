@@ -4,17 +4,16 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
-import discord4j.common.ReactorResources;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
+import discord4j.rest.request.RouteMatcher;
+import discord4j.rest.response.ResponseFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.netty.resources.ConnectionProvider;
-
-import java.time.Duration;
+import reactor.retry.Retry;
 
 public class LilMo {
     public static final Logger LOGGER = LoggerFactory.getLogger(LilMo.class);
@@ -31,12 +30,10 @@ public class LilMo {
 
     public static void main(String[] args){
         final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN"))
-                .setReactorResources(ReactorResources.builder()
-                        .httpClient(ReactorResources
-                                .newHttpClient(ConnectionProvider.builder("custom")
-                                        .maxIdleTime(Duration.ofDays(2))
-                                        .build()))
-                        .build())
+                .onClientResponse(
+                        ResponseFunction.retryWhen(
+                                RouteMatcher.any(),
+                                Retry.any()))
                 .build()
                 .gateway()
                 .setInitialPresence(s -> ClientPresence.online(
