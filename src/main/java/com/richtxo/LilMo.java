@@ -12,11 +12,9 @@ import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 public class LilMo {
     public static final Logger LOGGER = LoggerFactory.getLogger(LilMo.class);
