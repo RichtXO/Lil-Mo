@@ -39,14 +39,14 @@ public class CommandRegistrar {
         }
 
         appService.bulkOverwriteGlobalApplicationCommand(appID, commands)
-                .doOnNext(cmd -> LOGGER.debug("Successfully registered Global Command: " + cmd.name()))
-                .doOnError(err -> LOGGER.error("Failed to register global commands: " + err))
+                .doOnNext(cmd -> LOGGER.debug("Successfully registered Global Command: {}", cmd.name()))
+                .doOnError(err -> LOGGER.error("Failed to register global commands: {}", err.toString()))
                 .subscribe();
 
         if (guildID != 9999)
             appService.bulkOverwriteGuildApplicationCommand(appID, guildID, commands)
-                    .doOnNext(cmd -> LOGGER.debug("Successfully registered Guild command: " + cmd.name()))
-                    .doOnError(err -> LOGGER.error("Failed to register guild commands: " + err))
+                    .doOnNext(cmd -> LOGGER.debug("Successfully registered Guild command: {}", cmd.name()))
+                    .doOnError(err -> LOGGER.error("Failed to register guild commands: {}", err.toString()))
                     .subscribe();
     }
 }
