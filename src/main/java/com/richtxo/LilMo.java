@@ -9,8 +9,12 @@ import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
+import discord4j.rest.http.client.ClientException;
+import discord4j.rest.request.RouteMatcher;
+import discord4j.rest.response.ResponseFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.retry.Retry;
 
 public class LilMo {
     public static final Logger LOGGER = LoggerFactory.getLogger(LilMo.class);
@@ -27,10 +31,10 @@ public class LilMo {
 
     public static void main(String[] args){
         final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN"))
-//                .onClientResponse(
-//                        ResponseFunction.retryWhen(
-//                                RouteMatcher.any(),
-//                                Retry.anyOf(SslHandler.class)))
+                .onClientResponse(
+                        ResponseFunction.retryWhen(
+                                RouteMatcher.any(),
+                                Retry.anyOf(ClientException.class)))
                 .build()
                 .gateway()
                 .setInitialPresence(s -> ClientPresence.online(
