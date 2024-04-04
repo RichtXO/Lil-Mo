@@ -32,7 +32,7 @@ public class LilMo {
                 .setReactorResources(ReactorResources.builder()
                         .httpClient(HttpClient.create()
                                 .compress(true)
-                                .keepAlive(false)
+                                .keepAlive(true)
                                 .followRedirect(true).secure())
                         .build())
                 .build()
