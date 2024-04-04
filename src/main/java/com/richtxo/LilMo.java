@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
+import discord4j.common.ReactorResources;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -11,6 +12,7 @@ import discord4j.core.object.presence.ClientActivity;
 import discord4j.core.object.presence.ClientPresence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.netty.http.client.HttpClient;
 
 public class LilMo {
     public static final Logger LOGGER = LoggerFactory.getLogger(LilMo.class);
@@ -27,6 +29,12 @@ public class LilMo {
 
     public static void main(String[] args){
         final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN"))
+                .setReactorResources(ReactorResources.builder()
+                        .httpClient(HttpClient.create()
+                                .compress(true)
+                                .keepAlive(false)
+                                .followRedirect(true).secure())
+                        .build())
                 .build()
                 .gateway()
                 .setInitialPresence(s -> ClientPresence.online(
