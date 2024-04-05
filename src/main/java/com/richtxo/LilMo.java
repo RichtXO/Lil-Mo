@@ -52,7 +52,8 @@ public class LilMo {
 
         Mono.when(client.on(ReadyEvent.class).doOnNext(readyEvent -> LOGGER.info("Logged in as {}",
                                         readyEvent.getSelf().getUsername())),
-                client.on(ChatInputInteractionEvent.class, Listener::handle),
+                client.on(ChatInputInteractionEvent.class, Listener::handle)
+                        .doOnError(t -> LOGGER.error("Error with ChatInputInteractionEvent: {}", t.toString())),
                 client.onDisconnect().doOnTerminate(() -> LOGGER.info("Disconnected!")))
             .block();
     }
