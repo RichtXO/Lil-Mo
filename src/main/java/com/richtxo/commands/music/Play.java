@@ -99,6 +99,10 @@ public class Play implements Command {
 
         if (url.toUpperCase().contains("track".toUpperCase())){
             SpotifySong song = spotifyFetch.fetchSong(url);
+
+            if (song == null)
+                return event.editReply("Can't fetch Spotify song!").then();
+
             return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song.toString())
                     , new AudioLoadResultHandler() {
                 @Override
