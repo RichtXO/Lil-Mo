@@ -1,5 +1,7 @@
 package com.richtxo.util.spotify;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.SpotifyApi;
 import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
@@ -10,9 +12,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.richtxo.LilMo.LOGGER;
 public class SpotifyFetch {
-
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final SpotifyApi spotify;
     private final int LIMIT = 50;
 
@@ -27,9 +28,7 @@ public class SpotifyFetch {
                     (spotify.getClientId(), spotify.getClientSecret());
             ClientCredentials creds = request.grant_type("client_credentials").build().execute();
             spotify.setAccessToken(creds.getAccessToken());
-        } catch (Exception e){
-            LOGGER.error("Error init spotify api: " + e.getMessage());
-        }
+        } catch (Exception e){ LOGGER.error("Error init spotify api: {}", e.getMessage()); }
     }
 
 
