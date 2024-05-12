@@ -16,6 +16,7 @@ public class TrackScheduler extends AudioEventAdapter {
 
     private final List<AudioTrack> queue;
     private final AudioPlayer player;
+    private boolean repeat = false;
 
     public TrackScheduler(AudioPlayer player) {
         // The queue may be modified by different threads so guarantee memory safety
@@ -59,11 +60,22 @@ public class TrackScheduler extends AudioEventAdapter {
         Collections.shuffle(queue);
     }
 
+    public void setRepeating(boolean repeating){
+        this.repeat = repeating;
+    }
+
+    public boolean isRepeating(){
+        return this.repeat;
+    }
+
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
         // Advance the player if the track completed naturally (FINISHED) or if the track cannot play (LOAD_FAILED)
         if (endReason.mayStartNext) {
-            skip();
+            if (repeat)
+                player.startTrack(track.makeClone(), false);
+            else
+                skip();
         }
     }
 }
