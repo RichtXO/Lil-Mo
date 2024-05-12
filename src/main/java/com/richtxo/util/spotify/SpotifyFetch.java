@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 public class SpotifyFetch {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final SpotifyApi spotify;
-    private final int LIMIT = 50;
 
     public SpotifyFetch() {
         this.spotify = new SpotifyApi.Builder()
@@ -50,11 +49,10 @@ public class SpotifyFetch {
             for (PlaylistTrack track : playlist.getTracks().getItems())
                 songIDs.add(track.getTrack().getId());
 
-
             List<Track> tracks = new ArrayList<>();
-            if (songIDs.size() > LIMIT){
-                for (int i = 1; i <= Math.ceil((double) songIDs.size() / LIMIT); i++){
-                    String test = String.join(",", songIDs.subList(LIMIT * (i - 1), Math.min(LIMIT * i, songIDs.size())));
+            if (songIDs.size() > 50){
+                for (int i = 1; i <= Math.ceil((double) songIDs.size() / 50); i++){
+                    String test = String.join(",", songIDs.subList(50 * (i - 1), Math.min(50 * i, songIDs.size())));
                     Track[] temp = spotify.getSeveralTracks(test).build().execute();
                     Collections.addAll(tracks, temp);
                 }
@@ -65,11 +63,10 @@ public class SpotifyFetch {
                 songs.add(new SpotifySong(track.getName(), track.getArtists()));
 
             return new SpotifyPlaylist(playlist.getName(), songs.toArray(SpotifySong[]::new));
-
         } catch (Exception e){
             LOGGER.error(String.format("Error when fetching spotify playlist `%s`: %s", getID(url), e.getMessage()));
+            return null;
         }
-        return null;
     }
 
     public SpotifyPlaylist fetchAlbum (String url){
@@ -82,17 +79,18 @@ public class SpotifyFetch {
             return new SpotifyPlaylist(album.getName(), songs.toArray(SpotifySong[]::new));
         } catch (Exception e){
             LOGGER.error(String.format("Error when fetching spotify album `%s`: %s", getID(url), e.getMessage()));
+            return null;
         }
-        return null;
     }
 
     private String getID(String link){
-        if (ifValidSpotifyLink(link)){
-            if (link.contains("?"))
-                return link.substring(link.lastIndexOf("/") + 1, link.indexOf("?"));
-            return link.substring(link.lastIndexOf("/"));
-        }
-        return "";
+        if (!ifValidSpotifyLink(link))
+            return "";
+
+        if (link.contains("?"))
+            return link.substring(link.lastIndexOf("/") + 1, link.indexOf("?"));
+
+        return link.substring(link.lastIndexOf("/"));
     }
 
     private boolean ifValidSpotifyLink(String link){
