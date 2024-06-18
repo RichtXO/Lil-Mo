@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -21,8 +22,10 @@ public class LilMo {
 
     static {
         PLAYER_MANAGER = new DefaultAudioPlayerManager();
-        // This is an optimization strategy that Discord4J can utilize to minimize allocations
+        YoutubeAudioSourceManager ytSourceManager = new YoutubeAudioSourceManager();
+        PLAYER_MANAGER.registerSourceManager(ytSourceManager);
         PLAYER_MANAGER.getConfiguration().setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
+
         AudioSourceManagers.registerRemoteSources(PLAYER_MANAGER);
         AudioSourceManagers.registerLocalSource(PLAYER_MANAGER);
     }
