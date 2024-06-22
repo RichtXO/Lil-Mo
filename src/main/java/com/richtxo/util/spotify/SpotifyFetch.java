@@ -1,6 +1,5 @@
 package com.richtxo.util.spotify;
 
-import org.apache.hc.core5.concurrent.CompletedFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.SpotifyApi;
