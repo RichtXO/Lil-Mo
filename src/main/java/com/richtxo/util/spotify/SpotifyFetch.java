@@ -1,5 +1,6 @@
 package com.richtxo.util.spotify;
 
+import org.apache.hc.core5.concurrent.CompletedFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -10,6 +11,7 @@ import se.michaelthelin.spotify.requests.authorization.client_credentials.Client
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Pattern;
 
 public class SpotifyFetch {
@@ -34,7 +36,8 @@ public class SpotifyFetch {
     public SpotifySong fetchSong (String url){
         try{
             String id = getID(url);
-            Track track = spotify.getTrack(id).build().execute();
+            CompletableFuture<Track> trackFuture = spotify.getTrack(id).build().executeAsync();
+            Track track = trackFuture.join();
             return new SpotifySong(track.getName(), track.getArtists());
         } catch (Exception e) {
             LOGGER.error(String.format("Error when fetching spotify song `%s`: %s", getID(url), e.getMessage()));
@@ -45,15 +48,18 @@ public class SpotifyFetch {
     public SpotifyPlaylist fetchPlaylist (String url){
         try {
             List<String> songIDs = new ArrayList<>();
-            Playlist playlist = spotify.getPlaylist(getID(url)).build().execute();
+            CompletableFuture<Playlist> playlistFuture = spotify.getPlaylist(getID(url)).build().executeAsync();
+            Playlist playlist = playlistFuture.join();
             for (PlaylistTrack track : playlist.getTracks().getItems())
                 songIDs.add(track.getTrack().getId());
 
             List<Track> tracks = new ArrayList<>();
             if (songIDs.size() > 50){
                 for (int i = 1; i <= Math.ceil((double) songIDs.size() / 50); i++){
-                    String test = String.join(",", songIDs.subList(50 * (i - 1), Math.min(50 * i, songIDs.size())));
-                    Track[] temp = spotify.getSeveralTracks(test).build().execute();
+                    String test = String.join(",", songIDs.subList(50 * (i - 1),
+                            Math.min(50 * i, songIDs.size())));
+                    CompletableFuture<Track[]> trackFuture = spotify.getSeveralTracks(test).build().executeAsync();
+                    Track[] temp = trackFuture.join();
                     Collections.addAll(tracks, temp);
                 }
             }
@@ -72,7 +78,8 @@ public class SpotifyFetch {
     public SpotifyPlaylist fetchAlbum (String url){
         try{
             List<SpotifySong> songs = new ArrayList<>();
-            Album album = spotify.getAlbum(getID(url)).build().execute();
+            CompletableFuture<Album> albumFuture = spotify.getAlbum(getID(url)).build().executeAsync();
+            Album album = albumFuture.get();
             for (TrackSimplified track : album.getTracks().getItems())
                 songs.add(new SpotifySong(track.getName(), track.getArtists()));
 
