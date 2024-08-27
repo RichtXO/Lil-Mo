@@ -39,7 +39,7 @@ public class SpotifyFetch {
             Track track = trackFuture.join();
             return new SpotifySong(track.getName(), track.getArtists());
         } catch (Exception e) {
-            LOGGER.error(String.format("Error when fetching spotify song `%s`: %s", getID(url), e.getMessage()));
+            LOGGER.error("Error when fetching spotify song `{}`: {}", getID(url), e.getMessage());
             return null;
         }
     }
@@ -69,7 +69,7 @@ public class SpotifyFetch {
 
             return new SpotifyPlaylist(playlist.getName(), songs.toArray(SpotifySong[]::new));
         } catch (Exception e){
-            LOGGER.error(String.format("Error when fetching spotify playlist `%s`: %s", getID(url), e.getMessage()));
+            LOGGER.error("Error when fetching spotify playlist `{}`: {}", getID(url), e.getMessage());
             return null;
         }
     }
@@ -84,7 +84,7 @@ public class SpotifyFetch {
 
             return new SpotifyPlaylist(album.getName(), songs.toArray(SpotifySong[]::new));
         } catch (Exception e){
-            LOGGER.error(String.format("Error when fetching spotify album `%s`: %s", getID(url), e.getMessage()));
+            LOGGER.error("Error when fetching spotify album `{}`: {}", getID(url), e.getMessage());
             return null;
         }
     }
