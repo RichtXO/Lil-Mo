@@ -19,21 +19,21 @@ It's easy to get started via Docker containers! Also need a valid Discord App To
 ### Installation
 1. Get a new Discord Application Token from [Discord Developer Portal](https://discord.com/developers/)
 2. Get a Spotify App Client ID and Secret Tokens from [Spotify Developer Dashboard](https://developer.spotify.com/)
-3. Copy those 3 tokens and generate a new `.env` to hold them!
-   ```shell
+3. Clone the repo and change directory
+   ```sh
+   git clone https://github.com/RichtXO/Lil-Mo.git
+   cd Lil-Mo
+   ```
+4. Copy those 3 tokens and generate a new `.env` to hold them!
+   ```sh
    TOKEN={discord_token}
    SPOTIFY_CLIENT_ID={spotify_client_id}
    SPOTIFY_SECRET={spotify_client_secret}
-   ```
-4. Clone the repo
-   ```sh
-   git clone https://github.com/RichtXO/Lil-Mo.git
    ```
 5. Run Lil Mo!
    ```sh
    docker compose up --build -d
    ```
-
 
 ## Libraries Used
 * [Discord4J](https://github.com/Discord4J/Discord4J)
