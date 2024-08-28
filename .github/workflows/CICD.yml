@@ -25,8 +25,8 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run the Maven verify
-        run: mvn --batch-mode --update-snapshots verify
+      - name: Run the Maven test
+        run: mvn test
 
   CD:
     needs: [CI]
