@@ -33,64 +33,66 @@ public class SpotifyFetch {
 
 
     public SpotifySong fetchSong (String url){
-        try{
-            String id = getID(url);
-            CompletableFuture<Track> trackFuture = spotify.getTrack(id).build().executeAsync();
-            Track track = trackFuture.join();
-            return new SpotifySong(track.getName(), track.getArtists());
-        } catch (Exception e) {
-            LOGGER.error("Error when fetching spotify song `{}`: {}", getID(url), e.getMessage());
+        String id = getID(url);
+        if (id.isEmpty()){
+            LOGGER.error("Error when fetching spotify song");
             return null;
         }
+
+        CompletableFuture<Track> trackFuture = spotify.getTrack(id).build().executeAsync();
+        Track track = trackFuture.join();
+        return new SpotifySong(track.getName(), track.getArtists());
     }
 
     public SpotifyPlaylist fetchPlaylist (String url){
-        try {
-            List<String> songIDs = new ArrayList<>();
-            CompletableFuture<Playlist> playlistFuture = spotify.getPlaylist(getID(url)).build().executeAsync();
-            Playlist playlist = playlistFuture.join();
-            for (PlaylistTrack track : playlist.getTracks().getItems())
-                songIDs.add(track.getTrack().getId());
-
-            List<Track> tracks = new ArrayList<>();
-            if (songIDs.size() > 50){
-                for (int i = 1; i <= Math.ceil((double) songIDs.size() / 50); i++){
-                    String test = String.join(",", songIDs.subList(50 * (i - 1),
-                            Math.min(50 * i, songIDs.size())));
-                    CompletableFuture<Track[]> trackFuture = spotify.getSeveralTracks(test).build().executeAsync();
-                    Track[] temp = trackFuture.join();
-                    Collections.addAll(tracks, temp);
-                }
-            }
-
-            List<SpotifySong> songs = new ArrayList<>();
-            for (Track track : tracks)
-                songs.add(new SpotifySong(track.getName(), track.getArtists()));
-
-            return new SpotifyPlaylist(playlist.getName(), songs.toArray(SpotifySong[]::new));
-        } catch (Exception e){
-            LOGGER.error("Error when fetching spotify playlist `{}`: {}", getID(url), e.getMessage());
+        String id = getID(url);
+        if (id.isEmpty()){
+            LOGGER.error("Error when fetching spotify playlist");
             return null;
         }
+
+        CompletableFuture<Playlist> playlistFuture = spotify.getPlaylist(id).build().executeAsync();
+        List<String> songIDs = new ArrayList<>();
+        Playlist playlist = playlistFuture.join();
+        for (PlaylistTrack track : playlist.getTracks().getItems())
+            songIDs.add(track.getTrack().getId());
+
+        List<Track> tracks = new ArrayList<>();
+        if (songIDs.size() > 50){
+            for (int i = 1; i <= Math.ceil((double) songIDs.size() / 50); i++){
+                String test = String.join(",", songIDs.subList(50 * (i - 1),
+                        Math.min(50 * i, songIDs.size())));
+                CompletableFuture<Track[]> trackFuture = spotify.getSeveralTracks(test).build().executeAsync();
+                Track[] temp = trackFuture.join();
+                Collections.addAll(tracks, temp);
+            }
+        }
+
+        List<SpotifySong> songs = new ArrayList<>();
+        for (Track track : tracks)
+            songs.add(new SpotifySong(track.getName(), track.getArtists()));
+
+        return new SpotifyPlaylist(playlist.getName(), songs.toArray(SpotifySong[]::new));
     }
 
     public SpotifyPlaylist fetchAlbum (String url){
-        try{
-            List<SpotifySong> songs = new ArrayList<>();
-            CompletableFuture<Album> albumFuture = spotify.getAlbum(getID(url)).build().executeAsync();
-            Album album = albumFuture.get();
-            for (TrackSimplified track : album.getTracks().getItems())
-                songs.add(new SpotifySong(track.getName(), track.getArtists()));
-
-            return new SpotifyPlaylist(album.getName(), songs.toArray(SpotifySong[]::new));
-        } catch (Exception e){
-            LOGGER.error("Error when fetching spotify album `{}`: {}", getID(url), e.getMessage());
+        String id = getID(url);
+        if (id.isEmpty()){
+            LOGGER.error("Error when fetching spotify album");
             return null;
         }
+
+        List<SpotifySong> songs = new ArrayList<>();
+        CompletableFuture<Album> albumFuture = spotify.getAlbum(id).build().executeAsync();
+        Album album = albumFuture.join();
+        for (TrackSimplified track : album.getTracks().getItems())
+            songs.add(new SpotifySong(track.getName(), track.getArtists()));
+
+        return new SpotifyPlaylist(album.getName(), songs.toArray(SpotifySong[]::new));
     }
 
     private String getID(String link){
-        if (!ifValidSpotifyLink(link))
+        if (link == null || !ifValidSpotifyLink(link))
             return "";
 
         if (link.contains("?"))
