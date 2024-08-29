@@ -51,3 +51,7 @@ jobs:
           docker compose -f docker-compose.yml stop lil-mo &&
           docker compose -f docker-compose.yml rm -f lil-mo &&
           docker compose -f docker-compose.yml up -d
+
+      - name: Cleaning up
+        run: |
+          docker image prune -f
