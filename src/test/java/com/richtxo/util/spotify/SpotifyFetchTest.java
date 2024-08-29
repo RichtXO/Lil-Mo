@@ -1,18 +1,19 @@
 package com.richtxo.util.spotify;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SpotifyFetchTest {
 
-    private final SpotifyFetch fetch = new SpotifyFetch();
-
     @Test
-    @DisabledIfEnvironmentVariable(named = "SPOTIFY_CLIENT_ID", matches = "", disabledReason = "Needs Spotify Client ID")
-    @DisabledIfEnvironmentVariable(named = "SPOTIFY_SECRET", matches = "", disabledReason = "Needs Spotify Secret")
+    @EnabledIfEnvironmentVariable(named = "SPOTIFY_CLIENT_ID", matches = "*",
+            disabledReason = "Needs Spotify Client ID to test fetchSong")
+    @EnabledIfEnvironmentVariable(named = "SPOTIFY_SECRET", matches = "*",
+            disabledReason = "Needs Spotify Secret to test fetchSong")
     void fetchSong() {
+        final SpotifyFetch fetch = new SpotifyFetch();
         final SpotifySong valid =
                 fetch.fetchSong("https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=8347518e3fd249f5");
         assertNotNull(valid);
@@ -24,9 +25,12 @@ class SpotifyFetchTest {
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "SPOTIFY_CLIENT_ID", matches = "", disabledReason = "Needs Spotify Client ID")
-    @DisabledIfEnvironmentVariable(named = "SPOTIFY_SECRET", matches = "", disabledReason = "Needs Spotify Secret")
+    @EnabledIfEnvironmentVariable(named = "SPOTIFY_CLIENT_ID", matches = "*",
+            disabledReason = "Needs Spotify Client ID to test fetchPlaylist")
+    @EnabledIfEnvironmentVariable(named = "SPOTIFY_SECRET", matches = "*",
+            disabledReason = "Needs Spotify Secret to test fetchPlaylist")
     void fetchPlaylist() {
+        final SpotifyFetch fetch = new SpotifyFetch();
         final SpotifyPlaylist valid =
                 fetch.fetchPlaylist("https://open.spotify.com/playlist/51mPlHVdm7RAqdMACrOaXO?si=9ffd4363a75f4c41");
         assertNotNull(valid);
@@ -38,9 +42,12 @@ class SpotifyFetchTest {
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "SPOTIFY_CLIENT_ID", matches = "", disabledReason = "Needs Spotify Client ID")
-    @DisabledIfEnvironmentVariable(named = "SPOTIFY_SECRET", matches = "", disabledReason = "Needs Spotify Secret")
+    @EnabledIfEnvironmentVariable(named = "SPOTIFY_CLIENT_ID", matches = "*",
+            disabledReason = "Needs Spotify Client ID to test fetchAlbum")
+    @EnabledIfEnvironmentVariable(named = "SPOTIFY_SECRET", matches = "*",
+            disabledReason = "Needs Spotify Secret to test fetchAlbum")
     void fetchAlbum() {
+        final SpotifyFetch fetch = new SpotifyFetch();
         final SpotifyPlaylist valid =
                 fetch.fetchAlbum("https://open.spotify.com/album/5Z9iiGl2FcIfa3BMiv6OIw?si=QdYDFg5nSDmoi5grrwHH7g");
         assertNotNull(valid);
