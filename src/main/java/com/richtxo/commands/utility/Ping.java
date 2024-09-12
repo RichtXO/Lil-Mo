@@ -3,7 +3,6 @@ package com.richtxo.commands.utility;
 import com.richtxo.commands.Command;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.gateway.GatewayClient;
-import discord4j.voice.AudioProvider;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
