@@ -69,9 +69,10 @@ public class Play implements Command {
                             .map(ApplicationCommandInteractionOptionValue::asString).orElse("");
                     String provider = event.getOption("provider")
                             .flatMap(ApplicationCommandInteractionOption::getValue)
-                            .map(ApplicationCommandInteractionOptionValue::asString).orElse("ytsearch");
+                            .map(ApplicationCommandInteractionOptionValue::asString).orElse("scsearch");
                     Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                     AudioProvider voice = GuildAudioManager.of(guildId).getProvider();
+
                     if (isURL(searchQuery) && searchQuery.toUpperCase().contains("spotify".toUpperCase())){
                         Join.autoDisconnect(channel, voice)
                                 .and(loadSpotifyItem(event, searchQuery, provider)).subscribe();
@@ -86,7 +87,7 @@ public class Play implements Command {
 
     private boolean isURL(String input){
         try {
-            new URI(input).toURL();
+            new URI(input);
             return true;
         } catch (Exception ignored){
             return false;
@@ -103,7 +104,7 @@ public class Play implements Command {
             if (song == null)
                 return event.editReply("Can't fetch Spotify song!").then();
 
-            return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song.toString())
+            return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song)
                     , new AudioLoadResultHandler() {
                 @Override
                 public void trackLoaded(AudioTrack audioTrack) {
@@ -153,34 +154,32 @@ public class Play implements Command {
     private void loadSpotifySongs(ChatInputInteractionEvent event, String provider, Snowflake guildId,
                                   SpotifyPlaylist playlist) {
         for (SpotifySong song : playlist.getSongs()){
-            Mono.create(monoSink -> {
-                PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
-                    @Override
-                    public void trackLoaded(AudioTrack audioTrack) {
-                        // Shouldn't come in here
-                    }
+            Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
+                @Override
+                public void trackLoaded(AudioTrack audioTrack) {
+                    // Shouldn't come in here
+                }
 
-                    @Override
-                    public void playlistLoaded(AudioPlaylist audioPlaylist) {
-                        if (audioPlaylist.isSearchResult()) {
-                            play(guildId, audioPlaylist.getTracks().getFirst());
-                            monoSink.success();
-                        }
+                @Override
+                public void playlistLoaded(AudioPlaylist audioPlaylist) {
+                    if (audioPlaylist.isSearchResult()) {
+                        play(guildId, audioPlaylist.getTracks().getFirst());
+                        monoSink.success();
                     }
+                }
 
-                    @Override
-                    public void noMatches() {
-                        event.editReply(String.format("Can't find match to `%s`", song.toString())).subscribe();
-                        monoSink.error(new Exception("Not Found"));
-                    }
+                @Override
+                public void noMatches() {
+                    event.editReply(String.format("Can't find match to `%s`", song)).subscribe();
+                    monoSink.error(new Exception("Not Found"));
+                }
 
-                    @Override
-                    public void loadFailed(FriendlyException e) {
-                        event.editReply(String.format("Can't play `%s`", song.toString())).subscribe();
-                        monoSink.error(e);
-                    }
-                });
-            }).subscribe();
+                @Override
+                public void loadFailed(FriendlyException e) {
+                    event.editReply(String.format("Can't play `%s`", song)).subscribe();
+                    monoSink.error(e);
+                }
+            })).subscribe();
         }
     }
 
@@ -261,9 +260,7 @@ public class Play implements Command {
                     event.editReply().withEmbeds(selectionEmbed.build()).withComponents(
                             ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
                             ActionRow.of(cancelBtn)).then(listener)
-                            .doOnError(t -> {
-                                System.out.println("error!!!!!!!!!!!!" + t);
-                            }).subscribe();
+                            .doOnError(t -> System.out.println("error!!!!!!!!!!!!" + t)).subscribe();
                     monoSink.success();
                 }
 
