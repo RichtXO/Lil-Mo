@@ -87,7 +87,7 @@ public class Play implements Command {
 
     private boolean isURL(String input){
         try {
-            new URI(input);
+            new URI(input).toURL();
             return true;
         } catch (Exception ignored){
             return false;
