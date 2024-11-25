@@ -18,6 +18,10 @@
 
     <repositories>
         <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
             <id>arbjergDev-releases</id>
             <name>Lavalink Repository</name>
             <url>https://maven.lavalink.dev/releases</url>
@@ -63,7 +67,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
-            <version>6.1.12</version>
+            <version>6.2.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
