@@ -24,11 +24,13 @@ It's easy to get started via Docker containers! Also need a valid Discord App To
    git clone https://github.com/RichtXO/Lil-Mo.git
    cd Lil-Mo
    ```
-4. Copy those 3 tokens and generate a new `.env` to hold them!
+4. Copy these tokens and generate a new `.env` to hold them!
    ```sh
    TOKEN={discord_token}
    SPOTIFY_CLIENT_ID={spotify_client_id}
    SPOTIFY_SECRET={spotify_client_secret}
+   YT_TOKEN={yt_poToken}
+   YT_VISITOR={yt_visiterData}
    ```
 5. Run Lil Mo!
    ```sh

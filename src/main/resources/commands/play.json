@@ -16,7 +16,7 @@
       "choices": [
         {
           "name": "YouTube",
-          "value": "ytsearch"
+          "value": "ytmsearch"
         },
         {
           "name": "SoundCloud",

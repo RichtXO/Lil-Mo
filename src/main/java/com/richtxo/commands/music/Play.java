@@ -69,7 +69,7 @@ public class Play implements Command {
                             .map(ApplicationCommandInteractionOptionValue::asString).orElse("");
                     String provider = event.getOption("provider")
                             .flatMap(ApplicationCommandInteractionOption::getValue)
-                            .map(ApplicationCommandInteractionOptionValue::asString).orElse("scsearch");
+                            .map(ApplicationCommandInteractionOptionValue::asString).orElse("ytmsearch");
                     Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                     AudioProvider voice = GuildAudioManager.of(guildId).getProvider();
 

@@ -5,6 +5,7 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 import com.sedmelluq.discord.lavaplayer.track.playback.NonAllocatingAudioFrameBuffer;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.Web;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
@@ -23,6 +24,7 @@ public class LilMo {
     static {
         PLAYER_MANAGER = new DefaultAudioPlayerManager();
         YoutubeAudioSourceManager ytSourceManager = new YoutubeAudioSourceManager();
+        Web.setPoTokenAndVisitorData(System.getenv("YT_TOKEN"), System.getenv("YT_VISITOR"));
         PLAYER_MANAGER.registerSourceManager(ytSourceManager);
         PLAYER_MANAGER.getConfiguration().setFrameBufferFactory(NonAllocatingAudioFrameBuffer::new);
 
@@ -38,6 +40,10 @@ public class LilMo {
         }
         if (System.getenv("SPOTIFY_CLIENT_ID") == null || System.getenv("SPOTIFY_SECRET") == null) {
             LOGGER.error("Spotify credentials not set!");
+            return;
+        }
+        if (System.getenv("YT_TOKEN") == null || System.getenv("YT_VISITOR") == null) {
+            LOGGER.error("YT credentials not set!");
             return;
         }
 
