@@ -36,6 +36,11 @@ It's easy to get started via Docker containers! Also need a valid Discord App To
    ```sh
    docker compose up --build -d
    ```
+   
+
+## Notes
+- To generate `poToken` and `visitorData` values, I used 
+[youtube-trusted-session-generator](https://github.com/iv-org/youtube-trusted-session-generator).
 
 ## Libraries Used
 * [Discord4J](https://github.com/Discord4J/Discord4J)
