@@ -45,7 +45,7 @@ public class Join implements Command {
                     }
                     AudioProvider voice = GuildAudioManager.of(member.getGuildId()).getProvider();
                     event.reply(String.format("Joining `\uD83d\uDD0A %s`!", voiceChannel.getName()))
-                            .then(autoDisconnect(voiceChannel, voice)).subscribe();
+                            .then(autoDisconnect((VoiceChannel) voiceChannel, voice)).subscribe();
                 })
                 .doOnError(t -> event.reply("Something happened..."))
                 .then();

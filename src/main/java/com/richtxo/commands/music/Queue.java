@@ -9,8 +9,8 @@ import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.reaction.ReactionEmoji;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
 import reactor.core.publisher.Mono;
@@ -85,9 +85,9 @@ public class Queue implements Command {
                     }
 
                     List<EmbedCreateSpec> pagination = getBuilders(totalTime, paginationBuilder, user);
-                    Button nextBtn = Button.secondary("next", ReactionEmoji.unicode("⏭️"));
-                    Button prevBtn = Button.secondary("prev", ReactionEmoji.unicode("⏮️"));
-                    Button doneDtn = Button.secondary("done", ReactionEmoji.unicode("✅"));
+                    Button nextBtn = Button.secondary("next", Emoji.unicode("⏭️"));
+                    Button prevBtn = Button.secondary("prev", Emoji.unicode("⏮️"));
+                    Button doneDtn = Button.secondary("done", Emoji.unicode("✅"));
 
                     AtomicInteger page = new AtomicInteger();
                     AtomicBoolean ifDone = new AtomicBoolean(false);

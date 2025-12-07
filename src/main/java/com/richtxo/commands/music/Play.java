@@ -17,9 +17,10 @@ import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.component.ActionRow;
 import discord4j.core.object.component.Button;
+import discord4j.core.object.emoji.Emoji;
 import discord4j.core.object.entity.Member;
 import discord4j.core.object.entity.User;
-import discord4j.core.object.reaction.ReactionEmoji;
+import discord4j.core.object.entity.channel.VoiceChannel;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.rest.util.Color;
 import discord4j.voice.AudioProvider;
@@ -74,12 +75,12 @@ public class Play implements Command {
                     AudioProvider voice = GuildAudioManager.of(guildId).getProvider();
 
                     if (isURL(searchQuery) && searchQuery.toUpperCase().contains("spotify".toUpperCase())){
-                        Join.autoDisconnect(channel, voice)
+                        Join.autoDisconnect((VoiceChannel) channel, voice)
                                 .and(loadSpotifyItem(event, searchQuery, provider)).subscribe();
                         return;
                     }
 
-                    Join.autoDisconnect(channel, voice).and(loadItem(event, searchQuery, provider)).subscribe();
+                    Join.autoDisconnect((VoiceChannel) channel, voice).and(loadItem(event, searchQuery, provider)).subscribe();
                 })
                 .doOnError(t -> event.editReply("Something happened..."))
                 .then();
@@ -225,12 +226,12 @@ public class Play implements Command {
                         selectionEmbed.addField(String.format("`%d` - %s",
                                 i + 1, audioPlaylist.getTracks().get(i).getInfo().title), "", false);
 
-                    Button oneBtn = Button.secondary("1", ReactionEmoji.unicode("1️⃣"));
-                    Button twoBtn = Button.secondary("2", ReactionEmoji.unicode("2️⃣"));
-                    Button threeBtn = Button.secondary("3", ReactionEmoji.unicode("3️⃣"));
-                    Button fourBtn = Button.secondary("4", ReactionEmoji.unicode("4️⃣"));
-                    Button fiveBtn = Button.secondary("5", ReactionEmoji.unicode("5️⃣"));
-                    Button cancelBtn = Button.secondary("cancel", ReactionEmoji.unicode("❌"));
+                    Button oneBtn = Button.secondary("1", Emoji.unicode("1️⃣"));
+                    Button twoBtn = Button.secondary("2", Emoji.unicode("2️⃣"));
+                    Button threeBtn = Button.secondary("3", Emoji.unicode("3️⃣"));
+                    Button fourBtn = Button.secondary("4", Emoji.unicode("4️⃣"));
+                    Button fiveBtn = Button.secondary("5", Emoji.unicode("5️⃣"));
+                    Button cancelBtn = Button.secondary("cancel", Emoji.unicode("❌"));
 
                     AtomicBoolean hasSelect = new AtomicBoolean(false);
                     Mono<Void> listener = event.getClient().on(ButtonInteractionEvent.class,
