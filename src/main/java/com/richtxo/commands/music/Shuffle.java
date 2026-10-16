@@ -34,15 +34,14 @@ public class Shuffle implements Command {
                 .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
                 .defaultIfEmpty(false)
                 .flatMap(isConnected -> {
-                    if (isConnected){
+                    if (isConnected) {
                         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                         TrackScheduler scheduler = GuildAudioManager.of(guildId).getScheduler();
                         scheduler.shuffle();
-                        return event.reply(String.format("%s has shuffled the queue!", member.getNicknameMention()));
+                        return event.reply("%s has shuffled the queue!".formatted(member.getNicknameMention()));
                     }
 
-                    return event.reply(
-                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                    return event.reply("Not in the same voice channel as %s!".formatted(member.getNicknameMention()));
                 });
     }
 }

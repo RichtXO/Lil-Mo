@@ -1,5 +1,6 @@
 package com.richtxo.util.spotify;
 
+import module java.base;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import se.michaelthelin.spotify.SpotifyApi;
@@ -7,13 +8,8 @@ import se.michaelthelin.spotify.model_objects.credentials.ClientCredentials;
 import se.michaelthelin.spotify.model_objects.specification.*;
 import se.michaelthelin.spotify.requests.authorization.client_credentials.ClientCredentialsRequest;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
-
 public class SpotifyFetch {
+    private static final Pattern SPOTIFY_PATTERN = Pattern.compile("^(spotify:|https://[a-z]+\\.spotify\\.com/)");
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final SpotifyApi spotify;
 
@@ -24,17 +20,18 @@ public class SpotifyFetch {
                 .build();
 
         try {
-            ClientCredentialsRequest.Builder request = new ClientCredentialsRequest.Builder
-                    (spotify.getClientId(), spotify.getClientSecret());
+            ClientCredentialsRequest.Builder request = new ClientCredentialsRequest.Builder(
+                    spotify.getClientId(), spotify.getClientSecret());
             ClientCredentials creds = request.grant_type("client_credentials").build().execute();
             spotify.setAccessToken(creds.getAccessToken());
-        } catch (Exception e){ LOGGER.error("Error init spotify api: {}", e.getMessage()); }
+        } catch (Exception e) {
+            LOGGER.error("Error init spotify api: {}", e.getMessage());
+        }
     }
 
-
-    public SpotifySong fetchSong (String url){
+    public SpotifySong fetchSong(String url) {
         String id = getID(url);
-        if (id.isEmpty()){
+        if (id.isEmpty()) {
             LOGGER.error("Error when fetching spotify song");
             return null;
         }
@@ -44,9 +41,9 @@ public class SpotifyFetch {
         return new SpotifySong(track.getName(), track.getArtists());
     }
 
-    public SpotifyPlaylist fetchPlaylist (String url){
+    public SpotifyPlaylist fetchPlaylist(String url) {
         String id = getID(url);
-        if (id.isEmpty()){
+        if (id.isEmpty()) {
             LOGGER.error("Error when fetching spotify playlist");
             return null;
         }
@@ -58,11 +55,11 @@ public class SpotifyFetch {
             songIDs.add(track.getTrack().getId());
 
         List<Track> tracks = new ArrayList<>();
-        if (songIDs.size() > 50){
-            for (int i = 1; i <= Math.ceil((double) songIDs.size() / 50); i++){
-                String test = String.join(",", songIDs.subList(50 * (i - 1),
+        if (songIDs.size() > 50) {
+            for (int i = 1; i <= Math.ceilDiv(songIDs.size(), 50); i++) {
+                String batchIds = String.join(",", songIDs.subList(50 * (i - 1),
                         Math.min(50 * i, songIDs.size())));
-                CompletableFuture<Track[]> trackFuture = spotify.getSeveralTracks(test).build().executeAsync();
+                CompletableFuture<Track[]> trackFuture = spotify.getSeveralTracks(batchIds).build().executeAsync();
                 Track[] temp = trackFuture.join();
                 Collections.addAll(tracks, temp);
             }
@@ -75,9 +72,9 @@ public class SpotifyFetch {
         return new SpotifyPlaylist(playlist.getName(), songs.toArray(SpotifySong[]::new));
     }
 
-    public SpotifyPlaylist fetchAlbum (String url){
+    public SpotifyPlaylist fetchAlbum(String url) {
         String id = getID(url);
-        if (id.isEmpty()){
+        if (id.isEmpty()) {
             LOGGER.error("Error when fetching spotify album");
             return null;
         }
@@ -91,7 +88,7 @@ public class SpotifyFetch {
         return new SpotifyPlaylist(album.getName(), songs.toArray(SpotifySong[]::new));
     }
 
-    private String getID(String link){
+    private String getID(String link) {
         if (link == null || !ifValidSpotifyLink(link))
             return "";
 
@@ -101,8 +98,7 @@ public class SpotifyFetch {
         return link.substring(link.lastIndexOf("/"));
     }
 
-    private boolean ifValidSpotifyLink(String link){
-        Pattern spotifyPattern = Pattern.compile("^(spotify:|https://[a-z]+\\.spotify\\.com/)");
-        return spotifyPattern.matcher(link).find();
+    private boolean ifValidSpotifyLink(String link) {
+        return SPOTIFY_PATTERN.matcher(link).find();
     }
 }

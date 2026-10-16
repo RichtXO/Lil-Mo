@@ -1,13 +1,10 @@
 package com.richtxo.audio;
 
+import module java.base;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * This class schedules tracks for the audio player. It contains the queue of tracks.
@@ -44,8 +41,8 @@ public class TrackScheduler extends AudioEventAdapter {
         return !queue.isEmpty() && play(queue.removeFirst(), true);
     }
 
-    public boolean skip(int index){
-        if (!queue.isEmpty()){
+    public boolean skip(int index) {
+        if (!queue.isEmpty()) {
             queue.remove(index);
             return true;
         }
@@ -60,11 +57,11 @@ public class TrackScheduler extends AudioEventAdapter {
         Collections.shuffle(queue);
     }
 
-    public void setRepeating(boolean repeating){
+    public void setRepeating(boolean repeating) {
         this.repeat = repeating;
     }
 
-    public boolean isRepeating(){
+    public boolean isRepeating() {
         return this.repeat;
     }
 

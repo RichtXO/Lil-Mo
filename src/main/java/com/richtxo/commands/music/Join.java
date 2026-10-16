@@ -1,5 +1,6 @@
 package com.richtxo.commands.music;
 
+import module java.base;
 import com.richtxo.audio.GuildAudioManager;
 import com.richtxo.commands.Command;
 import discord4j.core.event.domain.VoiceStateUpdateEvent;
@@ -11,8 +12,6 @@ import discord4j.voice.AudioProvider;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
-
-import java.time.Duration;
 
 public class Join implements Command {
     @Override
@@ -38,20 +37,20 @@ public class Join implements Command {
                 .flatMap(VoiceState::getChannel)
                 .publishOn(Schedulers.boundedElastic())
                 .doOnSuccess(voiceChannel -> {
-                    if (voiceChannel == null){
-                        event.reply(String.format("%s must join a voice channel first!",
-                                member.getNicknameMention())).subscribe();
+                    if (voiceChannel == null) {
+                        event.reply("%s must join a voice channel first!".formatted(member.getNicknameMention()))
+                                .subscribe();
                         return;
                     }
                     AudioProvider voice = GuildAudioManager.of(member.getGuildId()).getProvider();
-                    event.reply(String.format("Joining `\uD83d\uDD0A %s`!", voiceChannel.getName()))
+                    event.reply("Joining `\uD83d\uDD0A %s`!".formatted(voiceChannel.getName()))
                             .then(autoDisconnect((VoiceChannel) voiceChannel, voice)).subscribe();
                 })
-                .doOnError(t -> event.reply("Something happened..."))
+                .doOnError(_ -> event.reply("Something happened..."))
                 .then();
     }
 
-    public static Mono<Void> autoDisconnect(VoiceChannel channel, AudioProvider voice){
+    public static Mono<Void> autoDisconnect(VoiceChannel channel, AudioProvider voice) {
         return channel.join().withProvider(voice)
                 .flatMap(voiceConnection -> {
                     // The bot itself has a VoiceState; 1 VoiceState signals bot is alone
@@ -62,7 +61,7 @@ public class Join implements Command {
                     // After 5 seconds, check if the bot is alone. This is useful if
                     // the bot joined alone, but no one else joined since connecting
                     Mono<Void> onDelay = Mono.delay(Duration.ofSeconds(5L))
-                            .filterWhen(ignored -> voiceStateCounter)
+                            .filterWhen(_ -> voiceStateCounter)
                             .switchIfEmpty(Mono.never())
                             .then();
 
@@ -70,7 +69,7 @@ public class Join implements Command {
                     Mono<Void> onEvent = channel.getClient().getEventDispatcher().on(VoiceStateUpdateEvent.class)
                             .filter(event -> event.getOld().flatMap(VoiceState::getChannelId)
                                     .map(channel.getId()::equals).orElse(false))
-                            .filterWhen(ignored -> voiceStateCounter)
+                            .filterWhen(_ -> voiceStateCounter)
                             .next()
                             .then();
 

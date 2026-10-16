@@ -1,10 +1,8 @@
 package com.richtxo.audio;
 
+import module java.base;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import discord4j.common.util.Snowflake;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static com.richtxo.LilMo.PLAYER_MANAGER;
 
@@ -13,7 +11,7 @@ public class GuildAudioManager {
     private static final Map<Snowflake, GuildAudioManager> MANAGERS = new ConcurrentHashMap<>();
 
     public static GuildAudioManager of(Snowflake id) {
-        return MANAGERS.computeIfAbsent(id, ignored -> new GuildAudioManager());
+        return MANAGERS.computeIfAbsent(id, _ -> new GuildAudioManager());
     }
 
     private final AudioPlayer player;

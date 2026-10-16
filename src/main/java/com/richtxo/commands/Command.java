@@ -1,7 +1,6 @@
 package com.richtxo.commands;
 
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.voice.AudioProvider;
 import reactor.core.publisher.Mono;
 
 public interface Command {
@@ -45,7 +44,7 @@ public interface Command {
      * @param event Discord's input events
      * @return Actions for the desired command from Discord's server
      */
-    default Mono<Void> handle(ChatInputInteractionEvent event){
+    default Mono<Void> handle(ChatInputInteractionEvent event) {
         return null;
     }
 }

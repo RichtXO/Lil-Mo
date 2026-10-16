@@ -1,5 +1,6 @@
 package com.richtxo;
 
+import module java.base;
 import discord4j.common.JacksonResources;
 import discord4j.discordjson.json.ApplicationCommandRequest;
 import discord4j.rest.RestClient;
@@ -8,9 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
-import java.io.*;
-import java.util.*;
 
 public class CommandRegistrar {
 
@@ -29,10 +27,10 @@ public class CommandRegistrar {
         final ApplicationService appService = restClient.getApplicationService();
         final long appID = restClient.getApplicationId().block();
         final long guildID = Long.parseLong(
-                System.getenv("TEST_SERVER") == null ? "9999" : System.getenv("TEST_SERVER"));
+                Objects.requireNonNullElse(System.getenv("TEST_SERVER"), "9999"));
         List<ApplicationCommandRequest> commands = new ArrayList<>();
 
-        for (Resource resource : matcher.getResources(COMMAND_REGEX)){
+        for (Resource resource : matcher.getResources(COMMAND_REGEX)) {
             ApplicationCommandRequest request = mapper.getObjectMapper()
                     .readValue(resource.getInputStream(), ApplicationCommandRequest.class);
             commands.add(request);

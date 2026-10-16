@@ -1,5 +1,6 @@
 package com.richtxo.commands.music;
 
+import module java.base;
 import com.richtxo.audio.GuildAudioManager;
 import com.richtxo.commands.Command;
 import com.richtxo.util.spotify.SpotifyFetch;
@@ -27,11 +28,6 @@ import discord4j.voice.AudioProvider;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.net.URI;
-import java.time.Duration;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import static com.richtxo.LilMo.PLAYER_MANAGER;
 
 public class Play implements Command {
@@ -52,16 +48,17 @@ public class Play implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-         return event.deferReply()
+        return event.deferReply()
                 .then(Mono.justOrEmpty(event.getInteraction().getMember()))
                 .flatMap(Member::getVoiceState)
                 .flatMap(VoiceState::getChannel)
                 .publishOn(Schedulers.boundedElastic())
                 .doOnSuccess(channel -> {
-                    if (channel == null){
-                        String name = ((event.getInteraction().getMember().isPresent() ?
-                                event.getInteraction().getMember().get().getNicknameMention() : "`You`"));
-                        event.editReply(String.format("%s is not in any voice channels!", name)).subscribe();
+                    if (channel == null) {
+                        String name = event.getInteraction().getMember()
+                                .map(Member::getNicknameMention)
+                                .orElse("`You`");
+                        event.editReply("%s is not in any voice channels!".formatted(name)).subscribe();
                         return;
                     }
 
@@ -74,79 +71,80 @@ public class Play implements Command {
                     Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                     AudioProvider voice = GuildAudioManager.of(guildId).getProvider();
 
-                    if (isURL(searchQuery) && searchQuery.toUpperCase().contains("spotify".toUpperCase())){
+                    if (isURL(searchQuery) && searchQuery.toUpperCase().contains("SPOTIFY")) {
                         Join.autoDisconnect((VoiceChannel) channel, voice)
                                 .and(loadSpotifyItem(event, searchQuery, provider)).subscribe();
                         return;
                     }
 
-                    Join.autoDisconnect((VoiceChannel) channel, voice).and(loadItem(event, searchQuery, provider)).subscribe();
+                    Join.autoDisconnect((VoiceChannel) channel, voice)
+                            .and(loadItem(event, searchQuery, provider)).subscribe();
                 })
-                .doOnError(t -> event.editReply("Something happened..."))
+                .doOnError(_ -> event.editReply("Something happened..."))
                 .then();
     }
 
-    private boolean isURL(String input){
+    private boolean isURL(String input) {
         try {
             new URI(input).toURL();
             return true;
-        } catch (Exception ignored){
+        } catch (Exception _) {
             return false;
         }
     }
 
-    private Mono<Void> loadSpotifyItem(ChatInputInteractionEvent event, String url, String provider){
+    private Mono<Void> loadSpotifyItem(ChatInputInteractionEvent event, String url, String provider) {
         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
         SpotifyFetch spotifyFetch = new SpotifyFetch();
 
-        if (url.toUpperCase().contains("track".toUpperCase())){
+        if (url.toUpperCase().contains("TRACK")) {
             SpotifySong song = spotifyFetch.fetchSong(url);
 
             if (song == null)
                 return event.editReply("Can't fetch Spotify song!").then();
 
-            return Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song)
-                    , new AudioLoadResultHandler() {
-                @Override
-                public void trackLoaded(AudioTrack audioTrack) {
-                    // Shouldn't come in here
-                    monoSink.error(new Exception("Not Spotify URL!"));
-                }
+            return Mono.create(monoSink -> PLAYER_MANAGER.loadItem("%s: %s".formatted(provider, song),
+                    new AudioLoadResultHandler() {
+                        @Override
+                        public void trackLoaded(AudioTrack audioTrack) {
+                            // Shouldn't come in here
+                            monoSink.error(new Exception("Not Spotify URL!"));
+                        }
 
-                @Override
-                public void playlistLoaded(AudioPlaylist audioPlaylist) {
-                    // Play the first result
-                    if (audioPlaylist.isSearchResult()){
-                        event.editReply(String.format("Adding spotify song `%s` to queue...", song.getTitle()))
-                                .subscribe();
-                        play(guildId, audioPlaylist.getTracks().getFirst());
-                    }
-                }
+                        @Override
+                        public void playlistLoaded(AudioPlaylist audioPlaylist) {
+                            // Play the first result
+                            if (audioPlaylist.isSearchResult()) {
+                                event.editReply("Adding spotify song `%s` to queue...".formatted(song.title()))
+                                        .subscribe();
+                                play(guildId, audioPlaylist.getTracks().getFirst());
+                            }
+                        }
 
-                @Override
-                public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", song)).subscribe();
-                    monoSink.error(new Exception("No match!"));
-                }
+                        @Override
+                        public void noMatches() {
+                            event.editReply("Can't find match to `%s`".formatted(song)).subscribe();
+                            monoSink.error(new Exception("No match!"));
+                        }
 
-                @Override
-                public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", song)).subscribe();
-                    monoSink.error(e);
-                }
-            }));
+                        @Override
+                        public void loadFailed(FriendlyException e) {
+                            event.editReply("Can't play `%s`".formatted(song)).subscribe();
+                            monoSink.error(e);
+                        }
+                    }));
         }
 
-        if (url.toUpperCase().contains("playlist".toUpperCase())){
+        if (url.toUpperCase().contains("PLAYLIST")) {
             SpotifyPlaylist playlist = spotifyFetch.fetchPlaylist(url);
             loadSpotifySongs(event, provider, guildId, playlist);
-            return event.editReply(String.format("Added spotify playlist: `%s`!", playlist.getTitle())).then();
+            return event.editReply("Added spotify playlist: `%s`!".formatted(playlist.title())).then();
         }
 
-        if (url.toUpperCase().contains("album".toUpperCase())){
+        if (url.toUpperCase().contains("ALBUM")) {
             SpotifyPlaylist playlist = spotifyFetch.fetchAlbum(url);
             loadSpotifySongs(event, provider, guildId, playlist);
-            return event.editReply(String.format("Added spotify album: `%s`!", playlist.getTitle())).then();
+            return event.editReply("Added spotify album: `%s`!".formatted(playlist.title())).then();
         }
 
         return event.editReply("Couldn't find spotify link!").then();
@@ -154,131 +152,131 @@ public class Play implements Command {
 
     private void loadSpotifySongs(ChatInputInteractionEvent event, String provider, Snowflake guildId,
                                   SpotifyPlaylist playlist) {
-        for (SpotifySong song : playlist.getSongs()){
-            Mono.create(monoSink -> PLAYER_MANAGER.loadItem(String.format("%s: %s", provider, song), new AudioLoadResultHandler() {
-                @Override
-                public void trackLoaded(AudioTrack audioTrack) {
-                    // Shouldn't come in here
-                }
+        for (SpotifySong song : playlist.songs()) {
+            Mono.create(monoSink -> PLAYER_MANAGER.loadItem("%s: %s".formatted(provider, song),
+                    new AudioLoadResultHandler() {
+                        @Override
+                        public void trackLoaded(AudioTrack audioTrack) {
+                            // Shouldn't come in here
+                        }
 
-                @Override
-                public void playlistLoaded(AudioPlaylist audioPlaylist) {
-                    if (audioPlaylist.isSearchResult()) {
-                        play(guildId, audioPlaylist.getTracks().getFirst());
-                        monoSink.success();
-                    }
-                }
+                        @Override
+                        public void playlistLoaded(AudioPlaylist audioPlaylist) {
+                            if (audioPlaylist.isSearchResult()) {
+                                play(guildId, audioPlaylist.getTracks().getFirst());
+                                monoSink.success();
+                            }
+                        }
 
-                @Override
-                public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", song)).subscribe();
-                    monoSink.error(new Exception("Not Found"));
-                }
+                        @Override
+                        public void noMatches() {
+                            event.editReply("Can't find match to `%s`".formatted(song)).subscribe();
+                            monoSink.error(new Exception("Not Found"));
+                        }
 
-                @Override
-                public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", song)).subscribe();
-                    monoSink.error(e);
-                }
-            })).subscribe();
+                        @Override
+                        public void loadFailed(FriendlyException e) {
+                            event.editReply("Can't play `%s`".formatted(song)).subscribe();
+                            monoSink.error(e);
+                        }
+                    })).subscribe();
         }
     }
 
-    private Mono<Object> loadItem(ChatInputInteractionEvent event, String query, String provider){
+    private Mono<Object> loadItem(ChatInputInteractionEvent event, String query, String provider) {
         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
-        String finalQuery;
-        if (isURL(query))
-                finalQuery = query;
-        else
-            finalQuery = String.format("%s: %s", provider, query);
+        String finalQuery = isURL(query) ? query : "%s: %s".formatted(provider, query);
 
         return Mono.create(monoSink ->
-            PLAYER_MANAGER.loadItem(finalQuery, new AudioLoadResultHandler() {
-                @Override
-                public void trackLoaded(AudioTrack audioTrack) {
-                    event.editReply(String.format("Adding song `%s` to queue...", audioTrack.getInfo().title))
-                            .subscribe();
-                    play(guildId, audioTrack);
-                    monoSink.success();
-                }
-
-                @Override
-                public void playlistLoaded(AudioPlaylist audioPlaylist) {
-                    if (!audioPlaylist.isSearchResult()) {
-                        event.editReply(String.format("Adding playlist: `%s` to queue...",
-                                audioPlaylist.getName())).subscribe();
-                        for (AudioTrack track : audioPlaylist.getTracks())
-                            play(guildId, track);
+                PLAYER_MANAGER.loadItem(finalQuery, new AudioLoadResultHandler() {
+                    @Override
+                    public void trackLoaded(AudioTrack audioTrack) {
+                        event.editReply("Adding song `%s` to queue...".formatted(audioTrack.getInfo().title))
+                                .subscribe();
+                        play(guildId, audioTrack);
                         monoSink.success();
-                        return;
                     }
 
-                    User bot = event.getClient().getSelf().block();
-                    EmbedCreateSpec.Builder selectionEmbed = EmbedCreateSpec.builder()
-                            .title(String.format("`%s` Music Selection", bot.getUsername()))
-                            .color(Color.of(0xad0000))
-                            .thumbnail(Objects.requireNonNull(
-                                    event.getInteraction().getMember().orElse(null)).getAvatarUrl())
-                            .description("Select the following by their corresponding numbers.")
-                            .addField("\u200B", "", false)
-                            .footer("Auto cancels in 10 seconds!", bot.getAvatarUrl());
-                    for (int i = 0; i < 5; i++)
-                        selectionEmbed.addField(String.format("`%d` - %s",
-                                i + 1, audioPlaylist.getTracks().get(i).getInfo().title), "", false);
+                    @Override
+                    public void playlistLoaded(AudioPlaylist audioPlaylist) {
+                        if (!audioPlaylist.isSearchResult()) {
+                            event.editReply("Adding playlist: `%s` to queue...".formatted(audioPlaylist.getName()))
+                                    .subscribe();
+                            for (AudioTrack track : audioPlaylist.getTracks())
+                                play(guildId, track);
+                            monoSink.success();
+                            return;
+                        }
 
-                    Button oneBtn = Button.secondary("1", Emoji.unicode("1️⃣"));
-                    Button twoBtn = Button.secondary("2", Emoji.unicode("2️⃣"));
-                    Button threeBtn = Button.secondary("3", Emoji.unicode("3️⃣"));
-                    Button fourBtn = Button.secondary("4", Emoji.unicode("4️⃣"));
-                    Button fiveBtn = Button.secondary("5", Emoji.unicode("5️⃣"));
-                    Button cancelBtn = Button.secondary("cancel", Emoji.unicode("❌"));
+                        User bot = event.getClient().getSelf().block();
+                        EmbedCreateSpec.Builder selectionEmbed = EmbedCreateSpec.builder()
+                                .title("`%s` Music Selection".formatted(bot.getUsername()))
+                                .color(Color.of(0xad0000))
+                                .thumbnail(Objects.requireNonNull(
+                                        event.getInteraction().getMember().orElse(null)).getAvatarUrl())
+                                .description("Select the following by their corresponding numbers.")
+                                .addField("\u200B", "", false)
+                                .footer("Auto cancels in 10 seconds!", bot.getAvatarUrl());
+                        for (int i = 0; i < 5; i++)
+                            selectionEmbed.addField("`%d` - %s".formatted(
+                                    i + 1, audioPlaylist.getTracks().get(i).getInfo().title), "", false);
 
-                    AtomicBoolean hasSelect = new AtomicBoolean(false);
-                    Mono<Void> listener = event.getClient().on(ButtonInteractionEvent.class,
-                            buttonEvent -> {
-                                String buttonId = buttonEvent.getCustomId();
-                                hasSelect.set(true);
-                                if (buttonId.equals("cancel"))
-                                    return buttonEvent.reply(String.format("Canceling search for %s",
-                                            event.getInteraction().getMember().orElse(null)
-                                                    .getNicknameMention())).then();
+                        Button oneBtn = Button.secondary("1", Emoji.unicode("1\ufe0f\u20e3"));
+                        Button twoBtn = Button.secondary("2", Emoji.unicode("2\ufe0f\u20e3"));
+                        Button threeBtn = Button.secondary("3", Emoji.unicode("3\ufe0f\u20e3"));
+                        Button fourBtn = Button.secondary("4", Emoji.unicode("4\ufe0f\u20e3"));
+                        Button fiveBtn = Button.secondary("5", Emoji.unicode("5\ufe0f\u20e3"));
+                        Button cancelBtn = Button.secondary("cancel", Emoji.unicode("\u274c"));
 
-                                play(guildId, audioPlaylist.getTracks().get(Integer.parseInt(buttonId) - 1));
-                                return buttonEvent
-                                        .reply(String.format("Adding `%s` into queue!", audioPlaylist.getTracks()
-                                                .get(Integer.parseInt(buttonId) - 1).getInfo().title)).then();
-                            })
-                    .timeout(Duration.ofSeconds(10))
-                    .onErrorResume(ignore -> {
-                        if (!hasSelect.get())
-                            return event.editReply(String.format(
-                                    "Timeout for music selection, %s!",
-                                    event.getInteraction().getMember().orElse(null)
-                                            .getNicknameMention())).then();
-                        return Mono.empty();
-                    }).then();
+                        AtomicBoolean hasSelect = new AtomicBoolean(false);
+                        Mono<Void> listener = event.getClient().on(ButtonInteractionEvent.class,
+                                        buttonEvent -> {
+                                            String buttonId = buttonEvent.getCustomId();
+                                            hasSelect.set(true);
+                                            if (buttonId.equals("cancel"))
+                                                return buttonEvent.reply("Canceling search for %s".formatted(
+                                                        event.getInteraction().getMember().orElse(null)
+                                                                .getNicknameMention())).then();
 
-                    event.editReply().withEmbeds(selectionEmbed.build()).withComponents(
-                            ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
-                            ActionRow.of(cancelBtn)).then(listener)
-                            .doOnError(t -> System.out.println("error!!!!!!!!!!!!" + t)).subscribe();
-                    monoSink.success();
-                }
+                                            int trackIndex = Integer.parseInt(buttonId) - 1;
+                                            AudioTrack selectedTrack = audioPlaylist.getTracks().get(trackIndex);
+                                            play(guildId, selectedTrack);
+                                            return buttonEvent
+                                                    .reply("Adding `%s` into queue!".formatted(selectedTrack.getInfo().title))
+                                                    .then();
+                                        })
+                                .timeout(Duration.ofSeconds(10))
+                                .onErrorResume(_ -> {
+                                    if (!hasSelect.get())
+                                        return event.editReply("Timeout for music selection, %s!".formatted(
+                                                event.getInteraction().getMember().orElse(null)
+                                                        .getNicknameMention())).then();
+                                    return Mono.empty();
+                                }).then();
 
-                @Override
-                public void noMatches() {
-                    event.editReply(String.format("Can't find match to `%s`", finalQuery));
-                    monoSink.error(new Exception("No match!"));
-                }
+                        event.editReply().withEmbeds(selectionEmbed.build()).withComponents(
+                                        ActionRow.of(oneBtn, twoBtn, threeBtn, fourBtn, fiveBtn),
+                                        ActionRow.of(cancelBtn)).then(listener)
+                                .doOnError(t -> System.out.println("error!!!!!!!!!!!!" + t)).subscribe();
+                        monoSink.success();
+                    }
 
-                @Override
-                public void loadFailed(FriendlyException e) {
-                    event.editReply(String.format("Can't play `%s`", finalQuery));
-                    monoSink.error(e);
-                }
-            })
+                    @Override
+                    public void noMatches() {
+                        event.editReply("Can't find match to `%s`".formatted(finalQuery));
+                        monoSink.error(new Exception("No match!"));
+                    }
+
+                    @Override
+                    public void loadFailed(FriendlyException e) {
+                        event.editReply("Can't play `%s`".formatted(finalQuery));
+                        monoSink.error(e);
+                    }
+                })
         );
     }
 
-    private void play(Snowflake guildId, AudioTrack track){ GuildAudioManager.of(guildId).getScheduler().play(track); }
+    private void play(Snowflake guildId, AudioTrack track) {
+        GuildAudioManager.of(guildId).getScheduler().play(track);
+    }
 }

@@ -2,32 +2,26 @@ package com.richtxo.util.spotify;
 
 import se.michaelthelin.spotify.model_objects.specification.ArtistSimplified;
 
-public class SpotifySong {
-
-    private String title;
-    private ArtistSimplified[] artists;
+public record SpotifySong(String title, ArtistSimplified[] artists) {
 
     public SpotifySong() {
-        this.title = "";
-        this.artists = new ArtistSimplified[]{};
+        this("", new ArtistSimplified[]{});
     }
 
-    public SpotifySong(String title, ArtistSimplified[] artists){
-        this.title = title;
-        this.artists = artists;
+    public String getTitle() {
+        return this.title;
     }
 
-    public String getTitle(){ return this.title; }
-    public ArtistSimplified[] getArtist() { return this.artists; }
+    public ArtistSimplified[] getArtist() {
+        return this.artists;
+    }
 
-    public void setTitle(String title) { this.title = title; }
-    public void setArtist(ArtistSimplified[] artists) { this.artists = artists; }
-
+    @Override
     public String toString() {
-        StringBuilder artists = new StringBuilder();
+        StringBuilder artistNames = new StringBuilder();
         for (ArtistSimplified artist : this.artists)
-            artists.append(String.format("%s ", artist.getName()));
+            artistNames.append("%s ".formatted(artist.getName()));
 
-        return String.format("%s %s lyrics", this.title, artists);
+        return "%s %s lyrics".formatted(this.title, artistNames);
     }
 }

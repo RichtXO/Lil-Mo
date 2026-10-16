@@ -35,27 +35,26 @@ public class Skip implements Command {
                 .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
                 .defaultIfEmpty(false)
                 .flatMap(isConnected -> {
-                    if (isConnected){
+                    if (isConnected) {
                         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                         int position = Math.toIntExact(event.getOption("position")
                                 .flatMap(ApplicationCommandInteractionOption::getValue)
                                 .map(ApplicationCommandInteractionOptionValue::asLong).orElse(0L));
 
-                        if (position == 0){
+                        if (position == 0) {
                             if (GuildAudioManager.of(guildId).getPlayer().getPlayingTrack() == null)
                                 return event.reply("Currently not playing anything!");
                             if (GuildAudioManager.of(guildId).getScheduler().skip())
                                 return event.reply("Skipping to next song!");
-                            GuildAudioManager.of((guildId)).getPlayer().stopTrack();
+                            GuildAudioManager.of(guildId).getPlayer().stopTrack();
                             return event.reply("Skipping current song!");
                         }
 
                         GuildAudioManager.of(guildId).getScheduler().skip(position - 1);
-                        return event.reply(String.format("Skipping song at position `%d` in queue!", position));
+                        return event.reply("Skipping song at position `%d` in queue!".formatted(position));
                     }
 
-                    return event.reply(
-                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                    return event.reply("Not in the same voice channel as %s!".formatted(member.getNicknameMention()));
                 });
     }
 }

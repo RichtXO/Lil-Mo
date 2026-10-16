@@ -34,18 +34,17 @@ public class RepeatOff implements Command {
                 .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
                 .defaultIfEmpty(false)
                 .flatMap(isConnected -> {
-                    if (isConnected){
+                    if (isConnected) {
                         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                         TrackScheduler scheduler = GuildAudioManager.of(guildId).getScheduler();
                         if (!scheduler.isRepeating())
-                            return event.reply(String.format("Not repeating this song, %s", member.getNicknameMention()));
+                            return event.reply("Not repeating this song, %s".formatted(member.getNicknameMention()));
 
                         scheduler.setRepeating(false);
-                        return event.reply(String.format("%s has stop repeating current song!", member.getNicknameMention()));
+                        return event.reply("%s has stop repeating current song!".formatted(member.getNicknameMention()));
                     }
 
-                    return event.reply(
-                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                    return event.reply("Not in the same voice channel as %s!".formatted(member.getNicknameMention()));
                 });
     }
 }

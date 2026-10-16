@@ -8,7 +8,6 @@ import discord4j.core.object.VoiceState;
 import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
 
-
 public class Stop implements Command {
     @Override
     public String getName() {
@@ -34,15 +33,14 @@ public class Stop implements Command {
                 .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
                 .defaultIfEmpty(false)
                 .flatMap(isConnected -> {
-                    if (isConnected){
+                    if (isConnected) {
                         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                         GuildAudioManager.of(guildId).getPlayer().stopTrack();
                         GuildAudioManager.of(guildId).getScheduler().clear();
                         return event.reply("Stopping music and clearing queue!");
                     }
 
-                    return event.reply(
-                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                    return event.reply("Not in the same voice channel as %s!".formatted(member.getNicknameMention()));
                 });
     }
 }

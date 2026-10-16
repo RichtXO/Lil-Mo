@@ -1,42 +1,49 @@
 package com.richtxo;
 
+import module java.base;
 import com.richtxo.commands.Command;
-import com.richtxo.commands.music.*;
-import com.richtxo.commands.randomize.*;
-import com.richtxo.commands.utility.*;
+import com.richtxo.commands.music.Join;
+import com.richtxo.commands.music.Leave;
+import com.richtxo.commands.music.Pause;
+import com.richtxo.commands.music.Play;
+import com.richtxo.commands.music.Queue;
+import com.richtxo.commands.music.Repeat;
+import com.richtxo.commands.music.RepeatOff;
+import com.richtxo.commands.music.Resume;
+import com.richtxo.commands.music.Shuffle;
+import com.richtxo.commands.music.Skip;
+import com.richtxo.commands.music.Stop;
+import com.richtxo.commands.randomize.CoinFlip;
+import com.richtxo.commands.randomize.D20;
+import com.richtxo.commands.utility.Ping;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Listener {
-    private final static List<Command> commands = new ArrayList<>();
+    private static final List<Command> commands = List.of(
+            // Adding commands here
+            new Ping(),
 
-    static {
-        // Adding commands here
-        commands.add(new Ping());
+            // Music Commands
+            new Join(),
+            new Play(),
+            new Leave(),
+            new Resume(),
+            new Pause(),
+            new Skip(),
+            new Stop(),
+            new Shuffle(),
+            new Queue(),
+            new Repeat(),
+            new RepeatOff(),
 
-        // Music Commands
-        commands.add(new Join());
-        commands.add(new Play());
-        commands.add(new Leave());
-        commands.add(new Resume());
-        commands.add(new Pause());
-        commands.add(new Skip());
-        commands.add(new Stop());
-        commands.add(new Shuffle());
-        commands.add(new Queue());
-        commands.add(new Repeat());
-        commands.add(new RepeatOff());
+            // Randomize Commands
+            new CoinFlip(),
+            new D20()
+    );
 
-        // Randomize Commands
-        commands.add(new CoinFlip());
-        commands.add(new D20());
-    }
-
-    public static Mono<Void> handle(ChatInputInteractionEvent event){
+    public static Mono<Void> handle(ChatInputInteractionEvent event) {
         return Flux.fromIterable(commands)
                 .filter(command -> command.getName().equals(event.getCommandName()))
                 .next()

@@ -32,9 +32,9 @@ public class Leave implements Command {
                 .flatMap(VoiceState::getChannel)
                 .publishOn(Schedulers.boundedElastic())
                 .doOnSuccess(voiceChannel -> {
-                    if (voiceChannel == null){
-                        event.reply(String.format("%s must join a voice channel first!",
-                                member.getNicknameMention())).subscribe();
+                    if (voiceChannel == null) {
+                        event.reply("%s must join a voice channel first!".formatted(member.getNicknameMention()))
+                                .subscribe();
                         return;
                     }
 
@@ -48,10 +48,10 @@ public class Leave implements Command {
                                 }
                             })
                             .flatMap(VoiceConnection::disconnect)
-                            .then(event.reply(String.format("Leaving `\uD83d\uDD0A %s`!", voiceChannel.getName())))
+                            .then(event.reply("Leaving `\uD83d\uDD0A %s`!".formatted(voiceChannel.getName())))
                             .subscribe();
                 })
-                .doOnError(t -> event.reply("Something happened..."))
+                .doOnError(_ -> event.reply("Something happened..."))
                 .then();
     }
 }

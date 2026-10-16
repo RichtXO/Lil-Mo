@@ -34,19 +34,18 @@ public class Resume implements Command {
                 .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
                 .defaultIfEmpty(false)
                 .flatMap(isConnected -> {
-                    if (isConnected){
+                    if (isConnected) {
                         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                         AudioPlayer player = GuildAudioManager.of(guildId).getPlayer();
 
                         if (!player.isPaused())
-                            return event.reply(String.format("Already playing music, %s!", member.getNicknameMention()));
+                            return event.reply("Already playing music, %s!".formatted(member.getNicknameMention()));
 
                         player.setPaused(false);
-                        return event.reply(String.format("%s resumed music!", member.getNicknameMention()));
+                        return event.reply("%s resumed music!".formatted(member.getNicknameMention()));
                     }
 
-                    return event.reply(
-                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                    return event.reply("Not in the same voice channel as %s!".formatted(member.getNicknameMention()));
                 });
     }
 }

@@ -1,12 +1,10 @@
 package com.richtxo.commands.utility;
 
+import module java.base;
 import com.richtxo.commands.Command;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.gateway.GatewayClient;
 import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.util.Optional;
 
 public class Ping implements Command {
     @Override
@@ -30,7 +28,7 @@ public class Ping implements Command {
                 .map(GatewayClient::getResponseTime);
 
         return latency.map(duration ->
-                event.reply(String.format("API Latency: `%d ms`", duration.toMillis()))).
-                orElseGet(() -> event.reply("API Latency: N/A"));
+                        event.reply("API Latency: `%d ms`".formatted(duration.toMillis())))
+                .orElseGet(() -> event.reply("API Latency: N/A"));
     }
 }

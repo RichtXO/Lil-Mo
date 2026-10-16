@@ -34,18 +34,16 @@ public class Pause implements Command {
                 .flatMap(voiceChannel -> voiceChannel.isMemberConnected(event.getClient().getSelfId()))
                 .defaultIfEmpty(false)
                 .flatMap(isConnected -> {
-                    if (isConnected){
+                    if (isConnected) {
                         Snowflake guildId = event.getInteraction().getGuildId().orElse(Snowflake.of(0));
                         AudioPlayer player = GuildAudioManager.of(guildId).getPlayer();
                         if (player.isPaused())
-                            return event.reply(String.format("Already paused, %s!", member.getNicknameMention()));
+                            return event.reply("Already paused, %s!".formatted(member.getNicknameMention()));
 
                         player.setPaused(true);
-                        return event.reply(String.format("%s paused music!", member.getNicknameMention()));
-
+                        return event.reply("%s paused music!".formatted(member.getNicknameMention()));
                     }
-                    return event.reply(
-                            String.format("Not in the same voice channel as %s!", member.getNicknameMention()));
+                    return event.reply("Not in the same voice channel as %s!".formatted(member.getNicknameMention()));
                 });
     }
 }

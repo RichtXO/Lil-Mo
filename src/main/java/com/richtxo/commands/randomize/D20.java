@@ -1,9 +1,10 @@
 package com.richtxo.commands.randomize;
 
+import module java.base;
 import com.richtxo.commands.Command;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
-import java.util.Random;
 
 public class D20 implements Command {
     @Override
@@ -23,9 +24,10 @@ public class D20 implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        String user = ((event.getInteraction().getMember().isPresent()) ?
-                event.getInteraction().getMember().get().getNicknameMention() : "`N/A`");
+        String user = event.getInteraction().getMember()
+                .map(Member::getNicknameMention)
+                .orElse("`N/A`");
 
-        return event.reply(String.format("%s has rolled a `%d`", user, new Random().nextInt(20) + 1));
+        return event.reply("%s has rolled a `%d`".formatted(user, ThreadLocalRandom.current().nextInt(1, 21)));
     }
 }

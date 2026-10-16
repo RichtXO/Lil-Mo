@@ -1,9 +1,10 @@
 package com.richtxo.commands.randomize;
 
+import module java.base;
 import com.richtxo.commands.Command;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.entity.Member;
 import reactor.core.publisher.Mono;
-import java.util.Random;
 
 public class CoinFlip implements Command {
     @Override
@@ -23,12 +24,13 @@ public class CoinFlip implements Command {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        String user = ((event.getInteraction().getMember().isPresent()) ?
-                event.getInteraction().getMember().get().getNicknameMention() : "`N/A`");
+        String user = event.getInteraction().getMember()
+                .map(Member::getNicknameMention)
+                .orElse("`N/A`");
 
-        if (new Random().nextInt(2) == 0)
-            return event.reply(String.format("@%s flipped `Heads`!", user)).then();
+        if (ThreadLocalRandom.current().nextBoolean())
+            return event.reply("@%s flipped `Heads`!".formatted(user)).then();
 
-        return event.reply(String.format("%s flipped `Tails`!", user)).then();
+        return event.reply("%s flipped `Tails`!".formatted(user)).then();
     }
 }

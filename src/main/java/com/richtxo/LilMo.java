@@ -32,7 +32,7 @@ public class LilMo {
         AudioSourceManagers.registerLocalSource(PLAYER_MANAGER);
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         // Checking if all env variables are present
         if (System.getenv("TOKEN") == null) {
             LOGGER.error("Discord Token not set!");
@@ -49,7 +49,7 @@ public class LilMo {
 
         final GatewayDiscordClient client = DiscordClientBuilder.create(System.getenv("TOKEN")).build()
                 .gateway()
-                .setInitialPresence(s -> ClientPresence.online(
+                .setInitialPresence(_ -> ClientPresence.online(
                         ClientActivity.listening("/play").withState("Give me more music!")))
                 .login().block();
 
@@ -57,13 +57,17 @@ public class LilMo {
         try {
             assert client != null;
             new CommandRegistrar(client.getRestClient()).registerCmds();
-        } catch (Exception e) { LOGGER.error("Error trying to register commands: ", e); }
+        } catch (Exception e) {
+            LOGGER.error("Error trying to register commands: ", e);
+        }
 
-        Mono.when(client.on(ReadyEvent.class).doOnNext(readyEvent -> LOGGER.info("Logged in as {}",
-                                        readyEvent.getSelf().getUsername())),
+        Mono.when(
+                client.on(ReadyEvent.class)
+                        .doOnNext(readyEvent -> LOGGER.info("Logged in as {}", readyEvent.getSelf().getUsername())),
                 client.on(ChatInputInteractionEvent.class, Listener::handle)
                         .doOnError(t -> LOGGER.error("Error with ChatInputInteractionEvent: {}", t.toString())),
-                client.onDisconnect().doOnTerminate(() -> LOGGER.info("Disconnected!")))
-            .block();
+                client.onDisconnect()
+                        .doOnTerminate(() -> LOGGER.info("Disconnected!"))
+        ).block();
     }
 }
